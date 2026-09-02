@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта Будущего 2075</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #0a0e1a;
+            color: #e0e8f0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            animation: fadeIn 1s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .map-wrapper {
+            flex: 1;
+            position: relative;
+            background: #0d1525;
+            overflow: hidden;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .click-marker {
+            background: radial-gradient(circle, #ff0044, #ff5500);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 40px rgba(255, 0, 68, 0.9);
+            width: 24px;
+            height: 24px;
+            animation: pulse-marker 1.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes pulse-marker {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.8); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.3), transparent);
+            transform: scale(0);
+            animation: rippleAnim 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 5;
+        }
+        @keyframes rippleAnim {
+            to { transform: scale(10); opacity: 0; }
+        }
+
+        .panel {
+            width: 480px;
+            min-width: 480px;
+            background: linear-gradient(180deg, rgba(14, 26, 43, 0.95), rgba(6, 13, 24, 0.98));
+            padding: 25px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            border-left: 2px solid rgba(0, 204, 255, 0.3);
+            z-index: 1000;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+        }
+        .panel::-webkit-scrollbar { width: 4px; }
+        .panel::-webkit-scrollbar-thumb { background: #00ccff; border-radius: 10px; }
+
+        .panel h1 {
+            font-size: 24px;
+            background: linear-gradient(90deg, #00ccff, #00ff88, #00ccff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientMove 4s ease infinite;
+            letter-spacing: 3px;
+            border-bottom: 1px solid rgba(26, 58, 85, 0.5);
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% center; }
+            50% { background-position: 100% center; }
+            100% { background-position: 0% center; }
+        }
+        .panel h1 .logo-icon {
+            -webkit-text-fill-color: initial;
+            font-size: 28px;
+            animation: spinIcon 10s linear infinite;
+        }
+        @keyframes spinIcon {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .panel .sub {
+            font-size: 13px;
+            color: #6a8aaa;
+            margin-top: -8px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(10, 26, 42, 0.8);
+            border: 1px solid rgba(42, 90, 122, 0.5);
+            border-radius: 30px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        .search-box input:focus {
+            border-color: #00ccff;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.15);
+            transform: scale(1.02);
+        }
+        .search-box input::placeholder {
+            color: #4a6a8a;
+        }
+        .search-box button {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #00aaee, #0077cc);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .search-box button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(0, 170, 238, 0.4);
+        }
+
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .examples span {
+            background: rgba(10, 26, 42, 0.8);
+            padding: 5px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #6a9ac0;
+            border: 1px solid rgba(26, 58, 85, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .examples span:hover {
+            background: rgba(26, 58, 90, 0.9);
+            color: white;
+            border-color: #00ccff;
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        #resultBlock {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(26, 74, 106, 0.4);
+            border-radius: 16px;
+            padding: 22px;
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            min-height: 280px;
+            animation: resultAppear 0.8s ease;
+        }
+        #resultBlock.visible {
+            display: flex;
+        }
+        @keyframes resultAppear {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        #cityName {
+            font-size: 28px;
+            font-weight: bold;
+            color: #88ddff;
+            text-shadow: 0 0 30px rgba(0, 200, 255, 0.2);
+            animation: glowText 3s ease-in-out infinite;
+        }
+        @keyframes glowText {
+            0%, 100% { text-shadow: 0 0 20px rgba(0, 200, 255, 0.2); }
+            50% { text-shadow: 0 0 40px rgba(0, 200, 255, 0.4); }
+        }
+        #cityCoords {
+            font-size: 13px;
+            color: #4a7a9a;
+            margin-bottom: 14px;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 8px 0;
+        }
+        .stat-card {
+            background: rgba(10, 26, 42, 0.6);
+            padding: 12px 14px;
+            border-radius: 12px;
+            border-left: 3px solid #00ccff;
+            transition: all 0.3s ease;
+            animation: cardAppear 0.6s ease backwards;
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.1);
+            border-left-color: #00ff88;
+        }
+        .stat-card .label {
+            font-size: 11px;
+            color: #6a8aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        .value.danger { color: #ff4455; animation: dangerPulse 1.5s infinite; }
+        .value.warning { color: #ffaa33; animation: warningPulse 2s infinite; }
+        .value.good { color: #44dd88; }
+        @keyframes dangerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        @keyframes warningPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            margin: 6px 0;
+        }
+        .badge-danger {
+            background: rgba(68, 17, 34, 0.8);
+            color: #ff4455;
+            border: 1px solid #ff4455;
+        }
+        .badge-warning {
+            background: rgba(51, 34, 0, 0.8);
+            color: #ffaa33;
+            border: 1px solid #ffaa33;
+        }
+        .badge-good {
+            background: rgba(0, 51, 34, 0.8);
+            color: #44dd88;
+            border: 1px solid #44dd88;
+        }
+
+        #descriptionText {
+            background: rgba(5, 15, 26, 0.7);
+            padding: 16px 18px;
+            border-radius: 12px;
+            margin: 10px 0;
+            font-size: 14px;
+            line-height: 1.7;
+            border: 1px solid rgba(26, 58, 85, 0.3);
+            color: #b0ccee;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .stats-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #335577;
+            margin-top: 5px;
+            border-top: 1px solid rgba(26, 58, 85, 0.2);
+            padding-top: 10px;
+        }
+
+        .welcome-text {
+            color: #4a7a9a;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        @media (max-width: 800px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .panel {
+                width: 100%;
+                min-width: unset;
+                max-height: 50vh;
+                border-left: none;
+                border-top: 2px solid rgba(0, 204, 255, 0.3);
+                padding: 16px;
+            }
+            .map-wrapper {
+                height: 50vh;
+            }
+            .grid-2col {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .stat-card .value {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="map-wrapper" id="mapWrapper">
+        <div id="map"></div>
+    </div>
+
+    <div class="panel">
+        <h1><span class="logo-icon">🔮</span> Прогноз 2075</h1>
+        <div class="sub">Климатическая модель · Кликни по карте</div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Введите город, деревню, место...">
+            <button id="searchBtn">🔍 Найти</button>
+        </div>
+
+        <div class="examples">
+            <span data-place="Москва">Москва</span>
+            <span data-place="Санкт-Петербург">СПб</span>
+            <span data-place="Нью-Йорк">Нью-Йорк</span>
+            <span data-place="Лондон">Лондон</span>
+            <span data-place="Токио">Токио</span>
+            <span data-place="Сидней">Сидней</span>
+            <span data-place="Каир">Каир</span>
+            <span data-place="Париж">Париж</span>
+            <span data-place="Пекин">Пекин</span>
+            <span data-place="Рио-де-Жанейро">Рио</span>
+        </div>
+
+        <div id="resultBlock">
+            <div id="cityName">—</div>
+            <div id="cityCoords">📍 Координаты: —</div>
+            
+            <div class="grid-2col">
+                <div class="stat-card">
+                    <div class="label">🌡️ Температура +50 лет</div>
+                    <div class="value" id="tempValue">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">🌊 Уровень воды</div>
+                    <div class="value" id="waterValue">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">🌪️ Экстремальные явления</div>
+                    <div class="value" id="extremeValue" style="font-size:14px;">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">🏙️ Пригодность</div>
+                    <div class="value" id="habitableValue">—</div>
+                </div>
+            </div>
+
+            <div id="statusBadge" class="badge-status">⚠️ Оценка риска</div>
+            <div id="descriptionText">Кликни на любую точку карты или найди место через поиск...</div>
+            
+            <div class="stats-footer">
+                <span id="clickCounter">👆 Кликов: 0</span>
+                <span>🌍 OpenStreetMap</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // ============================================
+    // 1. КАРТА
+    // ============================================
+    const map = L.map('map', {
+        center: [55.7558, 37.6173],
+        zoom: 5
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        subdomains: 'abc',
+        maxZoom: 19
+    }).addTo(map);
+
+    let currentMarker = null;
+    let clickCount = 0;
+
+    // ============================================
+    // 2. БАЗА ЗНАНИЙ
+    // ============================================
+    const cityKnowledge = {
+        'москва': {
+            tempRise: 3.2,
+            waterRise: 0.3,
+            extreme: '🌧️ Увеличение зимних осадков',
+            habitable: 'Благоприятно',
+            description: 'Москва станет теплее: зимы мягче, снега меньше. Увеличатся дожди, но серьёзных угроз нет.'
+        },
+        'санкт-петербург': {
+            tempRise: 3.5,
+            waterRise: 0.8,
+            extreme: '🌊 Защита от наводнений',
+            habitable: 'Умеренно',
+            description: 'Петербургу требуется защита от Невы. Уровень воды поднимется, нужны новые дамбы.'
+        },
+        'нью-йорк': {
+            tempRise: 4.5,
+            waterRise: 2.0,
+            extreme: '🌀 Ураганы',
+            habitable: 'Сложно',
+            description: 'Нью-Йорк столкнётся с сильными ураганами. Уровень океана поднимется, Манхэттен в зоне риска.'
+        },
+        'лондон': {
+            tempRise: 3.8,
+            waterRise: 0.9,
+            extreme: '🌧️ Ливни',
+            habitable: 'Умеренно',
+            description: 'Лондон станет влажнее. Уровень Темзы поднимется, восточные районы в зоне риска.'
+        },
+        'токио': {
+            tempRise: 4.2,
+            waterRise: 1.2,
+            extreme: '🌀 Тайфуны',
+            habitable: 'Сложно',
+            description: 'Токио под угрозой супертайфунов. Город переносит инфраструктуру на возвышенности.'
+        },
+        'сидней': {
+            tempRise: 3.5,
+            waterRise: 0.7,
+            extreme: '🔥 Пожары и засухи',
+            habitable: 'Умеренно',
+            description: 'Сидней станет жарче и суше. Пожары вокруг города — ежегодная угроза.'
+        },
+        'каир': {
+            tempRise: 5.5,
+            waterRise: 0.2,
+            extreme: '☀️ Экстремальная жара',
+            habitable: 'Критично',
+            description: 'Каир столкнётся с невыносимой жарой: летом до +50°C. Нил мелеет, возможна массовая миграция.'
+        },
+        'париж': {
+            tempRise: 3.6,
+            waterRise: 0.6,
+            extreme: '🌧️ Ливни',
+            habitable: 'Благоприятно',
+            description: 'Париж станет теплее. Ливни учащаются, но серьёзных угроз нет.'
+        },
+        'пекин': {
+            tempRise: 4.0,
+            waterRise: 0.3,
+            extreme: '🌪️ Пыльные бури',
+            habitable: 'Сложно',
+            description: 'Пекин сталкивается с пыльными бурями и жарой. Требуется модернизация водоснабжения.'
+        },
+        'рио-де-жанейро': {
+            tempRise: 4.8,
+            waterRise: 1.5,
+            extreme: '🌀 Штормы и оползни',
+            habitable: 'Сложно',
+            description: 'Рио под угрозой штормов. Оползни в бедных кварталах становятся опаснее.'
+        }
+    };
+
+    // ============================================
+    // 3. ПРОГНОЗ
+    // ============================================
+    function getClimateForecast(lat, lon, placeName) {
+        const lowerName = placeName ? placeName.toLowerCase() : '';
+        
+        for (const [key, data] of Object.entries(cityKnowledge)) {
+            if (lowerName.includes(key)) {
+                return { ...data };
+            }
+        }
+
+        const absLat = Math.abs(lat);
+        const isCoastal = Math.abs(lon) > 30 && Math.abs(lon) < 150;
+        const isTropical = absLat < 23.5;
+        const isPolar = absLat > 66.5;
+        const isDesert = absLat > 20 && absLat < 40 && !isCoastal;
+
+        let tempRise = 2.8;
+        if (isTropical) tempRise = 4.5;
+        else if (isPolar) tempRise = 4.2;
+        else if (isDesert) tempRise = 5.0;
+        else if (absLat > 40 && absLat < 60 && !isCoastal) tempRise = 3.2;
+        tempRise = Math.round((tempRise + (Math.random() - 0.5) * 0.4) * 10) / 10;
+
+        let waterRise = 0.2;
+        if (isCoastal && absLat < 40) waterRise = 1.8;
+        else if (isCoastal && absLat < 60) waterRise = 1.0;
+        waterRise = Math.round((waterRise + (Math.random() - 0.5) * 0.3) * 10) / 10;
+
+        let extreme = '🌤️ Умеренные изменения';
+        let description = '';
+        
+        if (isPolar) {
+            extreme = '❄️ Таяние вечной мерзлоты';
+            description = 'Арктика нагревается быстрее всего. Таяние льдов изменит экосистемы.';
+        }
+        else if (isTropical && isCoastal) {
+            extreme = '🌀 Ураганы и штормы';
+            description = 'Тропические регионы столкнутся с усилением ураганов.';
+        }
+        else if (isTropical && !isCoastal) {
+            extreme = '🔥 Аномальная жара';
+            description = 'В тропиках станет ещё жарче. Учащаются засухи.';
+        }
+        else if (isDesert) {
+            extreme = '☀️ Экстремальная жара';
+            description = 'Пустыни расширяются. Температура достигает +50°C.';
+        }
+        else if (absLat > 40 && absLat < 60 && isCoastal) {
+            extreme = '🌊 Повышение уровня моря';
+            description = 'Прибрежные зоны сталкиваются с подъёмом воды.';
+        }
+        else if (absLat > 40 && absLat < 60 && !isCoastal) {
+            extreme = '🌧️ Изменение осадков';
+            description = 'Континентальные регионы становятся влажнее.';
+        }
+        else {
+            extreme = '🌤️ Умеренные изменения';
+            description = 'Изменения климата будут заметны, но без катастроф.';
+        }
+
+        let habitable = 'Благоприятно';
+        let riskNote = '';
+        
+        if (tempRise > 5.5 || waterRise > 2.2) {
+            habitable = 'Критично';
+            riskNote = 'Условия становятся опасными. ';
+        } else if (tempRise > 4.2 || waterRise > 1.5) {
+            habitable = 'Сложно';
+            riskNote = 'Потребуется адаптация. ';
+        } else {
+            habitable = 'Благоприятно';
+            riskNote = 'Изменения умеренны. ';
+        }
+
+        let fullDescription = riskNote;
+        fullDescription += `Температура вырастет на ${tempRise}°C. `;
+        fullDescription += `Уровень воды изменится на ${waterRise} м. `;
+        fullDescription += description;
+
+        return { tempRise, waterRise, extreme, habitable, description: fullDescription };
+    }
+
+    // ============================================
+    // 4. ПОКАЗ РЕЗУЛЬТАТА
+    // ============================================
+    function showResult(placeName, lat, lon) {
+        const data = getClimateForecast(lat, lon, placeName);
+        clickCount++;
+        document.getElementById('clickCounter').textContent = `👆 Кликов: ${clickCount}`;
+
+        const resultBlock = document.getElementById('resultBlock');
+        resultBlock.classList.remove('visible');
+
+        setTimeout(() => {
+            document.getElementById('cityName').textContent = placeName || 'Неизвестное место';
+            document.getElementById('cityCoords').textContent = `📍 ${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+            
+            const tempEl = document.getElementById('tempValue');
+            tempEl.textContent = `+${data.tempRise}°C`;
+            tempEl.className = 'value ' + (data.tempRise > 5.0 ? 'danger' : data.tempRise > 3.8 ? 'warning' : 'good');
+            
+            const waterEl = document.getElementById('waterValue');
+            waterEl.textContent = `${data.waterRise} м`;
+            waterEl.className = 'value ' + (data.waterRise > 1.8 ? 'danger' : data.waterRise > 1.0 ? 'warning' : 'good');
+            
+            document.getElementById('extremeValue').textContent = data.extreme;
+            
+            const habEl = document.getElementById('habitableValue');
+            habEl.textContent = data.habitable;
+            habEl.className = 'value ' + (data.habitable === 'Критично' ? 'danger' : data.habitable === 'Сложно' ? 'warning' : 'good');
+            
+            const badge = document.getElementById('statusBadge');
+            if (data.habitable === 'Критично') {
+                badge.className = 'badge-status badge-danger';
+                badge.textContent = '🚨 Высокий риск';
+            } else if (data.habitable === 'Сложно') {
+                badge.className = 'badge-status badge-warning';
+                badge.textContent = '⚠️ Требуется адаптация';
+            } else {
+                badge.className = 'badge-status badge-good';
+                badge.textContent = '✅ Относительная безопасность';
+            }
+            
+            document.getElementById('descriptionText').textContent = data.description;
+            resultBlock.classList.add('visible');
+        }, 200);
+    }
+
+    // ============================================
+    // 5. МАРКЕР
+    // ============================================
+    function addMarker(lat, lon, label) {
+        if (currentMarker) {
+            map.removeLayer(currentMarker);
+        }
+
+        const icon = L.divIcon({
+            className: 'click-marker',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        currentMarker = L.marker([lat, lon], { icon: icon }).addTo(map);
+        map.setView([lat, lon], Math.max(8, map.getZoom()));
+        showResult(label || `${lat.toFixed(2)}, ${lon.toFixed(2)}`, lat, lon);
+    }
+
+    // ============================================
+    // 6. КЛИК ПО КАРТЕ
+    // ============================================
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lon = e.latlng.lng;
+        
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=ru`)
+            .then(res => res.json())
+            .then(data => {
+                let placeName = 'Неизвестное место';
+                if (data.display_name) {
+                    const parts = data.display_name.split(',');
+                    placeName = parts.slice(0, 2).join(',').trim();
+                }
+                addMarker(lat, lon, placeName);
+            })
+            .catch(() => {
+                addMarker(lat, lon, `${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+            });
+    });
+
+    // ============================================
+    // 7. ПОИСК
+    // ============================================
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) return;
+
+        document.getElementById('resultBlock').classList.remove('visible');
+        document.getElementById('cityName').textContent = '⏳ Поиск...';
+        document.getElementById('cityName').style.color = '#6a8aaa';
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ru`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('cityName').style.color = '#88ddff';
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    const name = data[0].display_name.split(',')[0];
+                    addMarker(lat, lon, name);
+                } else {
+                    alert('❌ Место не найдено.');
+                    document.getElementById('cityName').textContent = '—';
+                }
+            })
+            .catch(() => {
+                alert('⚠️ Ошибка поиска. Проверьте интернет.');
+                document.getElementById('cityName').textContent = '—';
+                document.getElementById('cityName').style.color = '#88ddff';
+            });
+    });
+
+    // ============================================
+    // 8. ПРИМЕРЫ
+    // ============================================
+    document.querySelectorAll('.examples span').forEach(el => {
+        el.addEventListener('click', function() {
+            const place = this.dataset.place;
+            document.getElementById('searchInput').value = place;
+            document.getElementById('searchBtn').click();
+        });
+    });
+
+    // ============================================
+    // 9. ENTER
+    // ============================================
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') document.getElementById('searchBtn').click();
+    });
+
+    // ============================================
+    // 10. БЕЗ МАРКЕРА ПРИ СТАРТЕ!
+    // ============================================
+    // Теперь при загрузке НЕТ маркера и НЕТ результата
+    // Карта просто показывает мир, а пользователь сам выбирает место
+
+    console.log('🌍 Карта Будущего 2075 загружена!');
+    console.log('✅ Кликни по карте или найди город через поиск!');
+</script>
+
+</body>
+</html>
