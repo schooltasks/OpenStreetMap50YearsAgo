@@ -3,414 +3,703 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта Будущего 2075</title>
+    <title>🌍 Карта Будущего 2075</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
+        /* ============================================
+           ГЛОБАЛЬНЫЕ СТИЛИ
+           ============================================ */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: #0a0e1a;
+            background: #050a15;
             color: #e0e8f0;
             height: 100vh;
             overflow: hidden;
         }
-        
-        .app-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            animation: fadeIn 1s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
+
+        /* ============================================
+           ФОН С МЕРЦАЮЩИМИ ЗВЁЗДАМИ (РЕАЛИСТИЧНЫМИ)
+           ============================================ */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
+        /* ============================================
+           КАРТА НА ВЕСЬ ЭКРАН
+           ============================================ */
         .map-wrapper {
-            flex: 1;
-            position: relative;
-            background: #0d1525;
-            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
         }
+        
         #map {
             width: 100%;
             height: 100%;
         }
 
+        /* ============================================
+           БОМБИЧЕСКИЙ МАРКЕР
+           ============================================ */
         .click-marker {
+            width: 40px;
+            height: 40px;
             background: radial-gradient(circle, #ff0044, #ff5500);
             border-radius: 50%;
             border: 3px solid white;
-            box-shadow: 0 0 40px rgba(255, 0, 68, 0.9);
-            width: 24px;
-            height: 24px;
-            animation: pulse-marker 1.5s ease-in-out infinite;
+            box-shadow: 0 0 60px rgba(255, 0, 68, 0.9), 0 0 120px rgba(255, 0, 68, 0.4);
+            animation: markerSuperPulse 1.2s ease-in-out infinite;
             pointer-events: none;
+            position: relative;
         }
-        @keyframes pulse-marker {
+        .click-marker::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 0, 68, 0.3);
+            animation: markerRing 1.2s ease-in-out infinite;
+        }
+        .click-marker::after {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: -30px;
+            right: -30px;
+            bottom: -30px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 0, 68, 0.15);
+            animation: markerRing 1.2s ease-in-out infinite 0.4s;
+        }
+        @keyframes markerSuperPulse {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.8); opacity: 0.5; }
+            50% { transform: scale(1.4); opacity: 0.8; box-shadow: 0 0 80px rgba(255, 0, 68, 1); }
             100% { transform: scale(1); opacity: 1; }
         }
+        @keyframes markerRing {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
 
+        /* ВСПЛЕСК ПРИ КЛИКЕ */
         .ripple {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 200, 255, 0.3), transparent);
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.8), transparent 70%);
             transform: scale(0);
-            animation: rippleAnim 1s ease-out forwards;
+            animation: rippleBoom 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             pointer-events: none;
-            z-index: 5;
+            z-index: 10;
         }
-        @keyframes rippleAnim {
-            to { transform: scale(10); opacity: 0; }
+        @keyframes rippleBoom {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(20); opacity: 0; }
         }
 
+        /* ============================================
+           ПАНЕЛЬ — ПРОЗРАЧНАЯ, ЛЕВИТИРУЮЩАЯ
+           ============================================ */
         .panel {
-            width: 480px;
-            min-width: 480px;
-            background: linear-gradient(180deg, rgba(14, 26, 43, 0.95), rgba(6, 13, 24, 0.98));
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 420px;
+            max-height: 92vh;
+            background: rgba(10, 20, 40, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 204, 255, 0.2);
+            border-radius: 24px;
             padding: 25px 22px;
             display: flex;
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
-            border-left: 2px solid rgba(0, 204, 255, 0.3);
-            z-index: 1000;
-            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 204, 255, 0.05);
+            animation: panelFloat 3s ease-in-out infinite;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .panel::-webkit-scrollbar { width: 4px; }
-        .panel::-webkit-scrollbar-thumb { background: #00ccff; border-radius: 10px; }
+        .panel:hover {
+            border-color: rgba(0, 204, 255, 0.5);
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.9), 0 0 60px rgba(0, 204, 255, 0.1);
+            transform: translateY(-50%) scale(1.02);
+        }
+        
+        @keyframes panelFloat {
+            0%, 100% { transform: translateY(-50%) translateY(0px); }
+            50% { transform: translateY(-50%) translateY(-8px); }
+        }
+        
+        .panel::-webkit-scrollbar { width: 3px; }
+        .panel::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #00ccff, #ff00aa); border-radius: 10px; }
 
-        .panel h1 {
-            font-size: 24px;
-            background: linear-gradient(90deg, #00ccff, #00ff88, #00ccff);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientMove 4s ease infinite;
-            letter-spacing: 3px;
-            border-bottom: 1px solid rgba(26, 58, 85, 0.5);
-            padding-bottom: 12px;
+        /* ЗАГОЛОВОК С ОГНЁМ */
+        .panel-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            border-bottom: 1px solid rgba(0, 204, 255, 0.15);
+            padding-bottom: 12px;
         }
-        @keyframes gradientMove {
+        
+        .panel-header .icon {
+            font-size: 32px;
+            animation: iconSpin 4s linear infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 200, 0, 0.5));
+        }
+        @keyframes iconSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        .panel-header h1 {
+            font-size: 22px;
+            background: linear-gradient(90deg, #00ccff, #00ff88, #ff00aa, #00ccff);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fireGradient 3s linear infinite;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+        @keyframes fireGradient {
             0% { background-position: 0% center; }
-            50% { background-position: 100% center; }
-            100% { background-position: 0% center; }
+            100% { background-position: 300% center; }
         }
-        .panel h1 .logo-icon {
-            -webkit-text-fill-color: initial;
-            font-size: 28px;
-            animation: spinIcon 10s linear infinite;
-        }
-        @keyframes spinIcon {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+        
         .panel .sub {
-            font-size: 13px;
-            color: #6a8aaa;
-            margin-top: -8px;
+            font-size: 11px;
+            color: #4a7a9a;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: subGlow 2s ease-in-out infinite;
+        }
+        @keyframes subGlow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; text-shadow: 0 0 30px rgba(0, 204, 255, 0.3); }
         }
 
+        /* ============================================
+           ПОИСК — СВЕРХЪЕСТЕСТВЕННЫЙ
+           ============================================ */
         .search-box {
             display: flex;
             gap: 10px;
+            position: relative;
         }
+        .search-box::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ccff, #ff00aa, #00ccff);
+            background-size: 300% 300%;
+            border-radius: 30px;
+            z-index: -1;
+            animation: searchGlow 3s ease-in-out infinite;
+            filter: blur(8px);
+            opacity: 0.5;
+        }
+        @keyframes searchGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
         .search-box input {
             flex: 1;
             padding: 14px 20px;
-            background: rgba(10, 26, 42, 0.8);
-            border: 1px solid rgba(42, 90, 122, 0.5);
+            background: rgba(5, 15, 30, 0.9);
+            border: 1px solid rgba(42, 90, 122, 0.3);
             border-radius: 30px;
             color: white;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: inherit;
         }
         .search-box input:focus {
             border-color: #00ccff;
-            box-shadow: 0 0 30px rgba(0, 200, 255, 0.15);
-            transform: scale(1.02);
+            box-shadow: 0 0 60px rgba(0, 200, 255, 0.15);
+            transform: scale(1.05);
+            background: rgba(5, 15, 30, 1);
         }
         .search-box input::placeholder {
             color: #4a6a8a;
+            transition: 0.3s;
         }
+        .search-box input:focus::placeholder {
+            opacity: 0.2;
+            transform: translateX(20px);
+        }
+        
         .search-box button {
-            padding: 14px 30px;
-            background: linear-gradient(135deg, #00aaee, #0077cc);
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #00aaee, #ff00aa);
             border: none;
             border-radius: 30px;
             color: white;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: inherit;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        .search-box button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg) translateX(-100%);
+            transition: 0.8s;
+        }
+        .search-box button:hover::before {
+            transform: rotate(45deg) translateX(100%);
         }
         .search-box button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(0, 170, 238, 0.4);
+            transform: scale(1.1) translateY(-3px);
+            box-shadow: 0 10px 50px rgba(0, 170, 238, 0.5);
+        }
+        .search-box button:active {
+            transform: scale(0.9);
         }
 
+        /* ============================================
+           ПРИМЕРЫ ГОРОДОВ — ПАРЯТ
+           ============================================ */
         .examples {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
         .examples span {
-            background: rgba(10, 26, 42, 0.8);
-            padding: 5px 16px;
+            background: rgba(10, 26, 42, 0.6);
+            padding: 4px 14px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             color: #6a9ac0;
-            border: 1px solid rgba(26, 58, 85, 0.4);
+            border: 1px solid rgba(26, 58, 85, 0.3);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
         }
         .examples span:hover {
             background: rgba(26, 58, 90, 0.9);
             color: white;
             border-color: #00ccff;
-            transform: translateY(-2px) scale(1.05);
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 0 8px 30px rgba(0, 200, 255, 0.3);
+        }
+        .examples span:active {
+            transform: scale(0.8);
         }
 
+        /* ============================================
+           РЕЗУЛЬТАТ — ВЗРЫВНОЙ
+           ============================================ */
         #resultBlock {
-            background: rgba(0, 20, 40, 0.6);
-            border: 1px solid rgba(26, 74, 106, 0.4);
+            background: rgba(0, 15, 30, 0.5);
+            border: 1px solid rgba(26, 74, 106, 0.2);
             border-radius: 16px;
-            padding: 22px;
+            padding: 20px;
             flex: 1;
             display: none;
             flex-direction: column;
-            min-height: 280px;
-            animation: resultAppear 0.8s ease;
+            min-height: 260px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
         }
+        #resultBlock::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 204, 255, 0.03), transparent, rgba(255, 0, 170, 0.03), transparent);
+            animation: rotateBg 30s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes rotateBg {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
         #resultBlock.visible {
             display: flex;
+            animation: resultSuperBoom 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes resultAppear {
-            from { opacity: 0; transform: translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes resultSuperBoom {
+            0% { opacity: 0; transform: scale(0.5) rotate(-10deg) translateY(60px); }
+            50% { transform: scale(1.05) rotate(2deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg) translateY(0); }
         }
 
         #cityName {
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 900;
             color: #88ddff;
-            text-shadow: 0 0 30px rgba(0, 200, 255, 0.2);
-            animation: glowText 3s ease-in-out infinite;
+            text-shadow: 0 0 50px rgba(0, 200, 255, 0.3);
+            animation: nameSuperGlow 2s ease-in-out infinite;
+            line-height: 1.2;
+            position: relative;
+            z-index: 1;
         }
-        @keyframes glowText {
-            0%, 100% { text-shadow: 0 0 20px rgba(0, 200, 255, 0.2); }
-            50% { text-shadow: 0 0 40px rgba(0, 200, 255, 0.4); }
+        @keyframes nameSuperGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(0, 200, 255, 0.2); }
+            50% { text-shadow: 0 0 60px rgba(0, 200, 255, 0.5), 0 0 120px rgba(0, 200, 255, 0.2); }
         }
+        
         #cityCoords {
-            font-size: 13px;
+            font-size: 12px;
             color: #4a7a9a;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
         }
 
+        /* ============================================
+           СТАТИСТИКА — МЕГА-КАРТОЧКИ
+           ============================================ */
         .grid-2col {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 8px 0;
+            gap: 8px;
+            margin: 6px 0;
+            position: relative;
+            z-index: 1;
         }
+        
         .stat-card {
-            background: rgba(10, 26, 42, 0.6);
-            padding: 12px 14px;
+            background: rgba(5, 15, 30, 0.5);
+            padding: 10px 12px;
             border-radius: 12px;
             border-left: 3px solid #00ccff;
-            transition: all 0.3s ease;
-            animation: cardAppear 0.6s ease backwards;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
         }
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-        @keyframes cardAppear {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 204, 255, 0.05), transparent);
+            opacity: 0;
+            transition: 0.5s;
         }
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+        .stat-card:nth-child(1) { animation: cardSuperBoom 0.6s ease backwards 0.05s; }
+        .stat-card:nth-child(2) { animation: cardSuperBoom 0.6s ease backwards 0.15s; }
+        .stat-card:nth-child(3) { animation: cardSuperBoom 0.6s ease backwards 0.25s; }
+        .stat-card:nth-child(4) { animation: cardSuperBoom 0.6s ease backwards 0.35s; }
+        
+        @keyframes cardSuperBoom {
+            from { opacity: 0; transform: translateX(-60px) rotate(-5deg) scale(0.5); }
+            to { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
+        }
+        
         .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.1);
-            border-left-color: #00ff88;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 200, 255, 0.15);
+            border-left-color: #ff00aa;
         }
+        
         .stat-card .label {
-            font-size: 11px;
-            color: #6a8aaa;
+            font-size: 10px;
+            color: #5a7a9a;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
+            letter-spacing: 1.5px;
+            font-weight: 700;
         }
         .stat-card .value {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 4px;
+            font-size: 18px;
+            font-weight: 900;
+            margin-top: 3px;
+            transition: all 0.5s ease;
         }
-        .value.danger { color: #ff4455; animation: dangerPulse 1.5s infinite; }
-        .value.warning { color: #ffaa33; animation: warningPulse 2s infinite; }
-        .value.good { color: #44dd88; }
-        @keyframes dangerPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+        
+        .value.danger {
+            color: #ff4455;
+            animation: dangerSuperPulse 1s ease-in-out infinite;
         }
-        @keyframes warningPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .value.warning {
+            color: #ffaa33;
+            animation: warningSuperPulse 1.5s ease-in-out infinite;
+        }
+        .value.good {
+            color: #44dd88;
+        }
+        
+        @keyframes dangerSuperPulse {
+            0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 20px rgba(255, 68, 85, 0.3); }
+            50% { opacity: 0.5; transform: scale(1.15); text-shadow: 0 0 60px rgba(255, 68, 85, 0.6); }
+        }
+        @keyframes warningSuperPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); text-shadow: 0 0 40px rgba(255, 170, 51, 0.4); }
         }
 
+        /* ============================================
+           БЕЙДЖ — ЭПИЧНЫЙ
+           ============================================ */
         .badge-status {
             display: inline-block;
-            padding: 8px 20px;
+            padding: 6px 20px;
             border-radius: 20px;
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 900;
+            font-size: 12px;
             text-align: center;
-            margin: 6px 0;
+            margin: 4px 0;
+            transition: all 0.5s ease;
+            position: relative;
+            z-index: 1;
+            animation: badgeSuperBoom 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
+        @keyframes badgeSuperBoom {
+            from { opacity: 0; transform: scale(0.3) rotate(-15deg); }
+            to { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        
         .badge-danger {
             background: rgba(68, 17, 34, 0.8);
             color: #ff4455;
             border: 1px solid #ff4455;
+            box-shadow: 0 0 50px rgba(255, 68, 85, 0.3);
+            animation: badgeDangerSuper 1.5s ease-in-out infinite;
         }
+        @keyframes badgeDangerSuper {
+            0%, 100% { box-shadow: 0 0 50px rgba(255, 68, 85, 0.3); transform: scale(1); }
+            50% { box-shadow: 0 0 100px rgba(255, 68, 85, 0.6); transform: scale(1.05); }
+        }
+        
         .badge-warning {
             background: rgba(51, 34, 0, 0.8);
             color: #ffaa33;
             border: 1px solid #ffaa33;
+            box-shadow: 0 0 50px rgba(255, 170, 51, 0.3);
+            animation: badgeWarningSuper 2s ease-in-out infinite;
         }
+        @keyframes badgeWarningSuper {
+            0%, 100% { box-shadow: 0 0 50px rgba(255, 170, 51, 0.3); }
+            50% { box-shadow: 0 0 100px rgba(255, 170, 51, 0.6); }
+        }
+        
         .badge-good {
             background: rgba(0, 51, 34, 0.8);
             color: #44dd88;
             border: 1px solid #44dd88;
+            box-shadow: 0 0 50px rgba(68, 221, 136, 0.3);
         }
 
+        /* ============================================
+           ОПИСАНИЕ
+           ============================================ */
         #descriptionText {
-            background: rgba(5, 15, 26, 0.7);
-            padding: 16px 18px;
+            background: rgba(0, 10, 20, 0.5);
+            padding: 14px 16px;
             border-radius: 12px;
-            margin: 10px 0;
-            font-size: 14px;
+            margin: 8px 0;
+            font-size: 13px;
             line-height: 1.7;
-            border: 1px solid rgba(26, 58, 85, 0.3);
-            color: #b0ccee;
+            border: 1px solid rgba(26, 58, 85, 0.2);
+            color: #a0b8d0;
             flex: 1;
             overflow-y: auto;
+            position: relative;
+            z-index: 1;
+            transition: all 0.5s ease;
         }
+        #descriptionText:hover {
+            border-color: rgba(0, 204, 255, 0.3);
+        }
+        
+        #descriptionText::-webkit-scrollbar { width: 3px; }
+        #descriptionText::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #00ccff, #ff00aa); border-radius: 10px; }
 
+        /* ============================================
+           ФУТЕР
+           ============================================ */
         .stats-footer {
             display: flex;
             justify-content: space-between;
-            font-size: 11px;
+            font-size: 10px;
             color: #335577;
-            margin-top: 5px;
-            border-top: 1px solid rgba(26, 58, 85, 0.2);
-            padding-top: 10px;
+            margin-top: 4px;
+            border-top: 1px solid rgba(26, 58, 85, 0.15);
+            padding-top: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        #clickCounter {
+            color: #00ccff;
+            font-weight: bold;
         }
 
-        .welcome-text {
-            color: #4a7a9a;
-            font-size: 14px;
-            text-align: center;
-            padding: 20px 0;
+        /* ============================================
+           АДАПТИВ
+           ============================================ */
+        @media (max-width: 900px) {
+            .panel {
+                right: 10px;
+                width: 340px;
+                padding: 18px 16px;
+            }
+            #cityName { font-size: 22px; }
+            .stat-card .value { font-size: 16px; }
         }
-
-        @media (max-width: 800px) {
-            .app-container {
+        
+        @media (max-width: 600px) {
+            .panel {
+                right: 5px;
+                bottom: 5px;
+                top: auto;
+                transform: none;
+                width: calc(100% - 10px);
+                max-height: 55vh;
+                border-radius: 16px;
+                animation: none;
+            }
+            .panel:hover {
+                transform: scale(1.02);
+            }
+            @keyframes panelFloat {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-5px); }
+            }
+            .panel:hover {
+                transform: scale(1.02);
+            }
+            .search-box {
                 flex-direction: column;
             }
-            .panel {
-                width: 100%;
-                min-width: unset;
-                max-height: 50vh;
-                border-left: none;
-                border-top: 2px solid rgba(0, 204, 255, 0.3);
-                padding: 16px;
-            }
-            .map-wrapper {
-                height: 50vh;
+            .search-box button {
+                padding: 12px;
             }
             .grid-2col {
                 grid-template-columns: 1fr 1fr;
-                gap: 6px;
+                gap: 5px;
+            }
+            .stat-card {
+                padding: 8px 10px;
             }
             .stat-card .value {
-                font-size: 16px;
+                font-size: 14px;
+            }
+            .examples span {
+                font-size: 10px;
+                padding: 3px 10px;
+            }
+            #cityName {
+                font-size: 20px;
+            }
+            .panel-header h1 {
+                font-size: 18px;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="map-wrapper" id="mapWrapper">
-        <div id="map"></div>
+<!-- ===== ЧАСТИЦЫ (ЗВЁЗДЫ) ===== -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- ===== КАРТА (ВЕСЬ ЭКРАН) ===== -->
+<div class="map-wrapper" id="mapWrapper">
+    <div id="map"></div>
+</div>
+
+<!-- ===== ПАНЕЛЬ (ПАРИТ НАД КАРТОЙ) ===== -->
+<div class="panel">
+    <div class="panel-header">
+        <span class="icon">⚡</span>
+        <h1>Прогноз 2075</h1>
+    </div>
+    <div class="sub">🔮 КЛИМАТИЧЕСКАЯ МОДЕЛЬ</div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Введите город, место...">
+        <button id="searchBtn">🚀 НАЙТИ</button>
     </div>
 
-    <div class="panel">
-        <h1><span class="logo-icon">🔮</span> Прогноз 2075</h1>
-        <div class="sub">Климатическая модель · Кликни по карте</div>
+    <div class="examples">
+        <span data-place="Москва">Москва</span>
+        <span data-place="Санкт-Петербург">СПб</span>
+        <span data-place="Нью-Йорк">Нью-Йорк</span>
+        <span data-place="Лондон">Лондон</span>
+        <span data-place="Токио">Токио</span>
+        <span data-place="Сидней">Сидней</span>
+        <span data-place="Каир">Каир</span>
+        <span data-place="Париж">Париж</span>
+        <span data-place="Пекин">Пекин</span>
+        <span data-place="Рио">Рио</span>
+    </div>
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Введите город, деревню, место...">
-            <button id="searchBtn">🔍 Найти</button>
+    <div id="resultBlock">
+        <div id="cityName">—</div>
+        <div id="cityCoords">📍 Координаты: —</div>
+        
+        <div class="grid-2col">
+            <div class="stat-card">
+                <div class="label">🌡️ Температура</div>
+                <div class="value" id="tempValue">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">🌊 Уровень воды</div>
+                <div class="value" id="waterValue">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">🌪️ Экстремальные явления</div>
+                <div class="value" id="extremeValue" style="font-size:13px;">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">🏙️ Пригодность</div>
+                <div class="value" id="habitableValue">—</div>
+            </div>
         </div>
 
-        <div class="examples">
-            <span data-place="Москва">Москва</span>
-            <span data-place="Санкт-Петербург">СПб</span>
-            <span data-place="Нью-Йорк">Нью-Йорк</span>
-            <span data-place="Лондон">Лондон</span>
-            <span data-place="Токио">Токио</span>
-            <span data-place="Сидней">Сидней</span>
-            <span data-place="Каир">Каир</span>
-            <span data-place="Париж">Париж</span>
-            <span data-place="Пекин">Пекин</span>
-            <span data-place="Рио-де-Жанейро">Рио</span>
-        </div>
-
-        <div id="resultBlock">
-            <div id="cityName">—</div>
-            <div id="cityCoords">📍 Координаты: —</div>
-            
-            <div class="grid-2col">
-                <div class="stat-card">
-                    <div class="label">🌡️ Температура +50 лет</div>
-                    <div class="value" id="tempValue">—</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">🌊 Уровень воды</div>
-                    <div class="value" id="waterValue">—</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">🌪️ Экстремальные явления</div>
-                    <div class="value" id="extremeValue" style="font-size:14px;">—</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">🏙️ Пригодность</div>
-                    <div class="value" id="habitableValue">—</div>
-                </div>
-            </div>
-
-            <div id="statusBadge" class="badge-status">⚠️ Оценка риска</div>
-            <div id="descriptionText">Кликни на любую точку карты или найди место через поиск...</div>
-            
-            <div class="stats-footer">
-                <span id="clickCounter">👆 Кликов: 0</span>
-                <span>🌍 OpenStreetMap</span>
-            </div>
+        <div id="statusBadge" class="badge-status">⚠️ ОЦЕНКА РИСКА</div>
+        <div id="descriptionText">Кликни на карту или найди место через поиск...</div>
+        
+        <div class="stats-footer">
+            <span id="clickCounter">👆 Кликов: 0</span>
+            <span>🌍 OpenStreetMap</span>
         </div>
     </div>
 </div>
@@ -419,11 +708,72 @@
 
 <script>
     // ============================================
-    // 1. КАРТА
+    // 0. ЧАСТИЦЫ (ЗВЁЗДЫ) НА CANVAS
+    // ============================================
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    class Star {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2 + 0.5;
+            this.speed = 0.02 + Math.random() * 0.03;
+            this.opacity = Math.random() * 0.8 + 0.2;
+            this.twinkleSpeed = 0.02 + Math.random() * 0.03;
+        }
+        update() {
+            this.opacity += Math.sin(Date.now() * this.twinkleSpeed) * 0.01;
+            this.opacity = Math.max(0.1, Math.min(1, this.opacity));
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+            ctx.fill();
+            
+            // Свечение
+            if (this.size > 1.5) {
+                ctx.shadowColor = 'rgba(150, 200, 255, 0.3)';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+    }
+    
+    for (let i = 0; i < 200; i++) {
+        stars.push(new Star());
+    }
+    
+    function animateStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(star => {
+            star.update();
+            star.draw();
+        });
+        requestAnimationFrame(animateStars);
+    }
+    animateStars();
+
+    // ============================================
+    // 1. КАРТА (ВЕСЬ ЭКРАН)
     // ============================================
     const map = L.map('map', {
         center: [55.7558, 37.6173],
-        zoom: 5
+        zoom: 5,
+        zoomControl: true,
+        fadeAnimation: true,
+        zoomAnimation: true,
+        markerZoomAnimation: true
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -442,7 +792,7 @@
         'москва': {
             tempRise: 3.2,
             waterRise: 0.3,
-            extreme: '🌧️ Увеличение зимних осадков',
+            extreme: '🌧️ Увеличение осадков',
             habitable: 'Благоприятно',
             description: 'Москва станет теплее: зимы мягче, снега меньше. Увеличатся дожди, но серьёзных угроз нет.'
         },
@@ -508,6 +858,13 @@
             extreme: '🌀 Штормы и оползни',
             habitable: 'Сложно',
             description: 'Рио под угрозой штормов. Оползни в бедных кварталах становятся опаснее.'
+        },
+        'берлин': {
+            tempRise: 3.4,
+            waterRise: 0.3,
+            extreme: '🌤️ Умеренные изменения',
+            habitable: 'Благоприятно',
+            description: 'Берлин станет теплее. Изменения умеренны, город адаптируется без серьёзных проблем.'
         }
     };
 
@@ -627,13 +984,13 @@
             const badge = document.getElementById('statusBadge');
             if (data.habitable === 'Критично') {
                 badge.className = 'badge-status badge-danger';
-                badge.textContent = '🚨 Высокий риск';
+                badge.textContent = '🚨 ВЫСОКИЙ РИСК';
             } else if (data.habitable === 'Сложно') {
                 badge.className = 'badge-status badge-warning';
-                badge.textContent = '⚠️ Требуется адаптация';
+                badge.textContent = '⚠️ ТРЕБУЕТСЯ АДАПТАЦИЯ';
             } else {
                 badge.className = 'badge-status badge-good';
-                badge.textContent = '✅ Относительная безопасность';
+                badge.textContent = '✅ ОТНОСИТЕЛЬНАЯ БЕЗОПАСНОСТЬ';
             }
             
             document.getElementById('descriptionText').textContent = data.description;
@@ -651,21 +1008,45 @@
 
         const icon = L.divIcon({
             className: 'click-marker',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
         });
 
         currentMarker = L.marker([lat, lon], { icon: icon }).addTo(map);
-        map.setView([lat, lon], Math.max(8, map.getZoom()));
+        map.setView([lat, lon], Math.max(8, map.getZoom()), {
+            animate: true,
+            duration: 1.5
+        });
+        
         showResult(label || `${lat.toFixed(2)}, ${lon.toFixed(2)}`, lat, lon);
     }
 
     // ============================================
-    // 6. КЛИК ПО КАРТЕ
+    // 6. ВСПЛЕСК
+    // ============================================
+    function createRipple(x, y) {
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        ripple.style.left = (x - 30) + 'px';
+        ripple.style.top = (y - 30) + 'px';
+        ripple.style.width = '60px';
+        ripple.style.height = '60px';
+        document.getElementById('mapWrapper').appendChild(ripple);
+        setTimeout(() => ripple.remove(), 1500);
+    }
+
+    // ============================================
+    // 7. КЛИК ПО КАРТЕ
     // ============================================
     map.on('click', function(e) {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
+        
+        const container = document.getElementById('mapWrapper');
+        const rect = container.getBoundingClientRect();
+        const x = e.originalEvent.clientX - rect.left;
+        const y = e.originalEvent.clientY - rect.top;
+        createRipple(x, y);
         
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=ru`)
             .then(res => res.json())
@@ -683,14 +1064,14 @@
     });
 
     // ============================================
-    // 7. ПОИСК
+    // 8. ПОИСК
     // ============================================
     document.getElementById('searchBtn').addEventListener('click', function() {
         const query = document.getElementById('searchInput').value.trim();
         if (!query) return;
 
         document.getElementById('resultBlock').classList.remove('visible');
-        document.getElementById('cityName').textContent = '⏳ Поиск...';
+        document.getElementById('cityName').textContent = '⏳ ПОИСК...';
         document.getElementById('cityName').style.color = '#6a8aaa';
 
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ru`)
@@ -715,31 +1096,34 @@
     });
 
     // ============================================
-    // 8. ПРИМЕРЫ
+    // 9. ПРИМЕРЫ
     // ============================================
     document.querySelectorAll('.examples span').forEach(el => {
         el.addEventListener('click', function() {
             const place = this.dataset.place;
             document.getElementById('searchInput').value = place;
             document.getElementById('searchBtn').click();
+            
+            this.style.transform = 'scale(0.7)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 300);
         });
     });
 
     // ============================================
-    // 9. ENTER
+    // 10. ENTER
     // ============================================
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') document.getElementById('searchBtn').click();
     });
 
     // ============================================
-    // 10. БЕЗ МАРКЕРА ПРИ СТАРТЕ!
+    // 11. СТАРТ
     // ============================================
-    // Теперь при загрузке НЕТ маркера и НЕТ результата
-    // Карта просто показывает мир, а пользователь сам выбирает место
-
     console.log('🌍 Карта Будущего 2075 загружена!');
-    console.log('✅ Кликни по карте или найди город через поиск!');
+    console.log('🔥 МЕГА-БОМБИЧЕСКАЯ ВЕРСИЯ 2.0!');
+    console.log('✅ Карта на весь экран, панель парит!');
 </script>
 
 </body>
