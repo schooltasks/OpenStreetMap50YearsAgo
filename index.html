@@ -2,704 +2,670 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌍 Карта Будущего 2075</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌍 NEURO-MAP 2055 | Климатический Прогноз</title>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* ============================================
-           ГЛОБАЛЬНЫЕ СТИЛИ
-           ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00aa;
+            --neon-green: #00ff9d;
+            --neon-orange: #ff9d00;
+            --neon-red: #ff2a6d;
+            --bg-dark: #050a14; /* Чуть светлее фон */
+            --panel-bg: rgba(10, 20, 35, 0.75);
+            --border-glow: rgba(0, 243, 255, 0.4);
+            --text-primary: #e0f2fe;
+            --text-secondary: #64748b;
         }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: #050a15;
-            color: #e0e8f0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
+            touch-action: none;
         }
 
-        /* ============================================
-           ФОН С МЕРЦАЮЩИМИ ЗВЁЗДАМИ (РЕАЛИСТИЧНЫМИ)
-           ============================================ */
-        #particles-canvas {
+        /* ===== ЭКРАН ЗАГРУЗКИ (BOOT SEQUENCE) ===== */
+        #boot-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        /* ============================================
-           КАРТА НА ВЕСЬ ЭКРАН
-           ============================================ */
-        .map-wrapper {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-        }
-        
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* ============================================
-           БОМБИЧЕСКИЙ МАРКЕР
-           ============================================ */
-        .click-marker {
-            width: 40px;
-            height: 40px;
-            background: radial-gradient(circle, #ff0044, #ff5500);
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 0 60px rgba(255, 0, 68, 0.9), 0 0 120px rgba(255, 0, 68, 0.4);
-            animation: markerSuperPulse 1.2s ease-in-out infinite;
-            pointer-events: none;
-            position: relative;
-        }
-        .click-marker::before {
-            content: '';
-            position: absolute;
-            top: -15px;
-            left: -15px;
-            right: -15px;
-            bottom: -15px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 0, 68, 0.3);
-            animation: markerRing 1.2s ease-in-out infinite;
-        }
-        .click-marker::after {
-            content: '';
-            position: absolute;
-            top: -30px;
-            left: -30px;
-            right: -30px;
-            bottom: -30px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 0, 68, 0.15);
-            animation: markerRing 1.2s ease-in-out infinite 0.4s;
-        }
-        @keyframes markerSuperPulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.8; box-shadow: 0 0 80px rgba(255, 0, 68, 1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes markerRing {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(2.5); opacity: 0; }
-        }
-
-        /* ВСПЛЕСК ПРИ КЛИКЕ */
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 200, 255, 0.8), transparent 70%);
-            transform: scale(0);
-            animation: rippleBoom 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            pointer-events: none;
-            z-index: 10;
-        }
-        @keyframes rippleBoom {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(20); opacity: 0; }
-        }
-
-        /* ============================================
-           ПАНЕЛЬ — ПРОЗРАЧНАЯ, ЛЕВИТИРУЮЩАЯ
-           ============================================ */
-        .panel {
-            position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 420px;
-            max-height: 92vh;
-            background: rgba(10, 20, 40, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 204, 255, 0.2);
-            border-radius: 24px;
-            padding: 25px 22px;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 204, 255, 0.05);
-            animation: panelFloat 3s ease-in-out infinite;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
         }
-        .panel:hover {
-            border-color: rgba(0, 204, 255, 0.5);
-            box-shadow: 0 0 100px rgba(0, 0, 0, 0.9), 0 0 60px rgba(0, 204, 255, 0.1);
-            transform: translateY(-50%) scale(1.02);
+        #boot-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .boot-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--neon-cyan);
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--neon-cyan);
         }
-        
-        @keyframes panelFloat {
-            0%, 100% { transform: translateY(-50%) translateY(0px); }
-            50% { transform: translateY(-50%) translateY(-8px); }
+        .boot-bar {
+            width: 300px;
+            height: 2px;
+            background: rgba(0, 243, 255, 0.2);
+            position: relative;
+            overflow: hidden;
         }
-        
-        .panel::-webkit-scrollbar { width: 3px; }
-        .panel::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #00ccff, #ff00aa); border-radius: 10px; }
+        .boot-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; height: 100%; width: 0%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 15px var(--neon-cyan);
+            animation: bootLoad 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes bootLoad { to { width: 100%; } }
 
-        /* ЗАГОЛОВОК С ОГНЁМ */
+        /* ===== ФОНОВЫЕ ЭФФЕКТЫ ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(0deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(0deg) translateY(50px); }
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.3;
+        }
+        .vignette {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        /* ===== КАРТА (СДЕЛАНА ЧУТЬ СВЕТЛЕЕ) ===== */
+        #map {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            background: #0a101a; /* Светлее, чтобы не было черной вспышки */
+            transition: filter 0.5s ease;
+        }
+        
+        /* ИЗМЕНЕНО: brightness увеличен с 0.6 до 0.8 для лучшей читаемости */
+        .leaflet-tile-pane {
+            filter: invert(100%) hue-rotate(180deg) brightness(0.8) contrast(1.15) saturate(1.1);
+        }
+        
+        .map-pulse {
+            animation: mapPulseAnim 0.5s ease-out;
+        }
+        @keyframes mapPulseAnim {
+            0% { filter: invert(100%) hue-rotate(180deg) brightness(0.8) contrast(1.15) saturate(1.1) drop-shadow(0 0 0px var(--neon-cyan)); }
+            50% { filter: invert(100%) hue-rotate(180deg) brightness(1.0) contrast(1.3) saturate(1.3) drop-shadow(0 0 25px var(--neon-cyan)); }
+            100% { filter: invert(100%) hue-rotate(180deg) brightness(0.8) contrast(1.15) saturate(1.1) drop-shadow(0 0 0px var(--neon-cyan)); }
+        }
+
+        .leaflet-control-zoom {
+            border: 1px solid var(--border-glow) !important;
+            background: rgba(10, 20, 35, 0.9) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+        .leaflet-control-zoom a {
+            color: var(--neon-cyan) !important;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2) !important;
+            transition: all 0.3s;
+        }
+        .leaflet-control-zoom a:hover {
+            background: var(--neon-cyan) !important;
+            color: #000 !important;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        /* ===== УЛЬТРА-МАРКЕР С РАДАРОМ ===== */
+        .click-marker {
+            position: relative;
+            width: 50px; height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .marker-core {
+            width: 14px; height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan), inset 0 0 10px #fff;
+            z-index: 2;
+            animation: corePulse 1.5s ease-in-out infinite;
+        }
+        .marker-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 50%;
+            animation: ringExpand 2s ease-out infinite;
+        }
+        .marker-sweep {
+            position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 243, 255, 0.4) 60deg, transparent 60deg);
+            animation: radarSpin 2s linear infinite;
+        }
+        @keyframes corePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        @keyframes ringExpand {
+            0% { transform: scale(0.5); opacity: 1; border-width: 3px; }
+            100% { transform: scale(2.5); opacity: 0; border-width: 0px; }
+        }
+        @keyframes radarSpin { to { transform: rotate(360deg); } }
+
+        /* ===== ВСПЛЕСК ===== */
+        .ripple {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 243, 255, 0.6), transparent 70%);
+            transform: scale(0);
+            animation: rippleAnim 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 0 30px var(--neon-cyan);
+        }
+        @keyframes rippleAnim {
+            to { transform: scale(25); opacity: 0; }
+        }
+
+        /* ===== ПАНЕЛЬ (HOLOGRAPHIC UI) ===== */
+        .panel {
+            position: fixed;
+            top: 20px; right: 20px;
+            width: 420px;
+            max-height: calc(100vh - 40px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(30px) saturate(1.5);
+            -webkit-backdrop-filter: blur(30px) saturate(1.5);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 100;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 40px rgba(0, 243, 255, 0.05);
+            animation: panelMaterialize 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes panelMaterialize {
+            from { opacity: 0; transform: translateX(80px) scale(0.9); filter: blur(10px); }
+            to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+        }
+
+        .panel.minimized {
+            max-height: 72px !important;
+            padding-top: 16px;
+            padding-bottom: 16px;
+            cursor: pointer;
+            overflow: hidden !important;
+        }
+        .panel.minimized:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.3);
+        }
+        .panel.minimized .search-box,
+        .panel.minimized .chips,
+        .panel.minimized #resultBlock,
+        .panel.minimized .scanner {
+            display: none !important;
+        }
+
+        .panel::-webkit-scrollbar { width: 4px; }
+        .panel::-webkit-scrollbar-track { background: transparent; }
+        .panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--neon-cyan), var(--neon-pink));
+            border-radius: 10px;
+        }
+
+        /* ===== ЗАГОЛОВОК С ГЛИТЧЕМ ===== */
         .panel-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid rgba(0, 204, 255, 0.15);
-            padding-bottom: 12px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            min-height: 40px;
+            flex-shrink: 0;
         }
+        .panel.minimized .panel-header { padding-bottom: 0; border-bottom: none; justify-content: space-between; }
         
         .panel-header .icon {
-            font-size: 32px;
-            animation: iconSpin 4s linear infinite;
-            filter: drop-shadow(0 0 20px rgba(255, 200, 0, 0.5));
+            font-size: 28px;
+            filter: drop-shadow(0 0 10px var(--neon-cyan));
+            animation: float 3s ease-in-out infinite;
         }
-        @keyframes iconSpin {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(1.2); }
-            100% { transform: rotate(360deg) scale(1); }
-        }
-        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
         .panel-header h1 {
-            font-size: 22px;
-            background: linear-gradient(90deg, #00ccff, #00ff88, #ff00aa, #00ccff);
-            background-size: 300% auto;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--neon-cyan), #fff, var(--neon-pink));
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: fireGradient 3s linear infinite;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-weight: 900;
-        }
-        @keyframes fireGradient {
-            0% { background-position: 0% center; }
-            100% { background-position: 300% center; }
-        }
-        
-        .panel .sub {
-            font-size: 11px;
-            color: #4a7a9a;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            animation: subGlow 2s ease-in-out infinite;
-        }
-        @keyframes subGlow {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; text-shadow: 0 0 30px rgba(0, 204, 255, 0.3); }
-        }
-
-        /* ============================================
-           ПОИСК — СВЕРХЪЕСТЕСТВЕННЫЙ
-           ============================================ */
-        .search-box {
-            display: flex;
-            gap: 10px;
+            animation: gradientShift 3s linear infinite;
+            letter-spacing: 1px;
+            line-height: 1.1;
             position: relative;
         }
-        .search-box::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #00ccff, #ff00aa, #00ccff);
-            background-size: 300% 300%;
-            border-radius: 30px;
-            z-index: -1;
-            animation: searchGlow 3s ease-in-out infinite;
-            filter: blur(8px);
-            opacity: 0.5;
+        .panel-header h1:hover {
+            animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+            color: var(--neon-cyan);
         }
-        @keyframes searchGlow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+        @keyframes gradientShift { to { background-position: 200% center; } }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
         }
-        
+
+        .sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--neon-cyan);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            opacity: 0.8;
+        }
+        .panel.minimized .sub { display: none; }
+
+        .toggle-btn {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: auto;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .toggle-btn:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-cyan);
+            transform: scale(1.1);
+        }
+        .panel.minimized .toggle-btn { transform: rotate(180deg); }
+
+        /* ===== ПОИСК ===== */
+        .search-box {
+            display: flex;
+            gap: 8px;
+            position: relative;
+            flex-shrink: 0;
+        }
         .search-box input {
             flex: 1;
-            padding: 14px 20px;
-            background: rgba(5, 15, 30, 0.9);
-            border: 1px solid rgba(42, 90, 122, 0.3);
-            border-radius: 30px;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             color: white;
-            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
             outline: none;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-family: inherit;
+            transition: all 0.3s ease;
         }
         .search-box input:focus {
-            border-color: #00ccff;
-            box-shadow: 0 0 60px rgba(0, 200, 255, 0.15);
-            transform: scale(1.05);
-            background: rgba(5, 15, 30, 1);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.05);
+            background: rgba(0, 0, 0, 0.6);
         }
-        .search-box input::placeholder {
-            color: #4a6a8a;
-            transition: 0.3s;
-        }
-        .search-box input:focus::placeholder {
-            opacity: 0.2;
-            transform: translateX(20px);
-        }
-        
+        .search-box input::placeholder { color: #475569; font-family: 'Inter', sans-serif; }
+
         .search-box button {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #00aaee, #ff00aa);
-            border: none;
-            border-radius: 30px;
-            color: white;
-            font-weight: bold;
+            padding: 14px 20px;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 16px;
+            color: var(--neon-cyan);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-family: inherit;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
             letter-spacing: 1px;
+            white-space: nowrap;
             position: relative;
             overflow: hidden;
         }
         .search-box button::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
-            transform: rotate(45deg) translateX(-100%);
-            transition: 0.8s;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
         }
-        .search-box button:hover::before {
-            transform: rotate(45deg) translateX(100%);
-        }
+        .search-box button:hover::before { left: 100%; }
         .search-box button:hover {
-            transform: scale(1.1) translateY(-3px);
-            box-shadow: 0 10px 50px rgba(0, 170, 238, 0.5);
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
         }
-        .search-box button:active {
-            transform: scale(0.9);
-        }
+        .search-box button:active { transform: scale(0.95); }
+        .search-box button:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        /* ============================================
-           ПРИМЕРЫ ГОРОДОВ — ПАРЯТ
-           ============================================ */
-        .examples {
+        /* ===== ЧИПЫ ===== */
+        .chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 8px;
+            flex-shrink: 0;
         }
-        .examples span {
-            background: rgba(10, 26, 42, 0.6);
-            padding: 4px 14px;
+        .chip {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 11px;
-            color: #6a9ac0;
-            border: 1px solid rgba(26, 58, 85, 0.3);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            user-select: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
         }
-        .examples span:hover {
-            background: rgba(26, 58, 90, 0.9);
-            color: white;
-            border-color: #00ccff;
-            transform: translateY(-4px) scale(1.1);
-            box-shadow: 0 8px 30px rgba(0, 200, 255, 0.3);
-        }
-        .examples span:active {
-            transform: scale(0.8);
+        .chip:hover {
+            background: rgba(0, 243, 255, 0.1);
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.2);
         }
 
-        /* ============================================
-           РЕЗУЛЬТАТ — ВЗРЫВНОЙ
-           ============================================ */
+        /* ===== РЕЗУЛЬТАТ ===== */
         #resultBlock {
-            background: rgba(0, 15, 30, 0.5);
-            border: 1px solid rgba(26, 74, 106, 0.2);
-            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            border-radius: 20px;
             padding: 20px;
-            flex: 1;
             display: none;
             flex-direction: column;
-            min-height: 260px;
-            backdrop-filter: blur(5px);
+            gap: 16px;
+            animation: resultDecrypt 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-shrink: 0;
             position: relative;
             overflow: hidden;
         }
         #resultBlock::before {
             content: '';
             position: absolute;
-            top: -100%;
-            left: -100%;
-            width: 300%;
-            height: 300%;
-            background: conic-gradient(from 0deg, transparent, rgba(0, 204, 255, 0.03), transparent, rgba(255, 0, 170, 0.03), transparent);
-            animation: rotateBg 30s linear infinite;
-            pointer-events: none;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            animation: scan 2s linear infinite;
         }
-        @keyframes rotateBg {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        #resultBlock.visible { display: flex; }
+        @keyframes resultDecrypt {
+            0% { opacity: 0; transform: scale(0.95) translateY(20px); filter: blur(5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
         }
-        
-        #resultBlock.visible {
-            display: flex;
-            animation: resultSuperBoom 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes resultSuperBoom {
-            0% { opacity: 0; transform: scale(0.5) rotate(-10deg) translateY(60px); }
-            50% { transform: scale(1.05) rotate(2deg); }
-            100% { opacity: 1; transform: scale(1) rotate(0deg) translateY(0); }
-        }
+        @keyframes scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
+        .city-header { display: flex; justify-content: space-between; align-items: flex-start; }
         #cityName {
+            font-family: 'Rajdhani', sans-serif;
             font-size: 28px;
-            font-weight: 900;
-            color: #88ddff;
-            text-shadow: 0 0 50px rgba(0, 200, 255, 0.3);
-            animation: nameSuperGlow 2s ease-in-out infinite;
-            line-height: 1.2;
-            position: relative;
-            z-index: 1;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            line-height: 1.1;
         }
-        @keyframes nameSuperGlow {
-            0%, 100% { text-shadow: 0 0 30px rgba(0, 200, 255, 0.2); }
-            50% { text-shadow: 0 0 60px rgba(0, 200, 255, 0.5), 0 0 120px rgba(0, 200, 255, 0.2); }
-        }
-        
         #cityCoords {
-            font-size: 12px;
-            color: #4a7a9a;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ============================================
-           СТАТИСТИКА — МЕГА-КАРТОЧКИ
-           ============================================ */
-        .grid-2col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            font-size: 11px;
+            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
             gap: 8px;
-            margin: 6px 0;
-            position: relative;
-            z-index: 1;
         }
-        
+        .live-indicator {
+            width: 6px; height: 6px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--neon-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--neon-green); } }
+
+        /* ===== СЕТКА СТАТИСТИКИ ===== */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-card {
-            background: rgba(5, 15, 30, 0.5);
-            padding: 10px 12px;
-            border-radius: 12px;
-            border-left: 3px solid #00ccff;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
-        .stat-card::after {
+        .stat-card:hover { 
+            transform: translateY(-3px) scale(1.02); 
+            background: rgba(255, 255, 255, 0.05); 
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .stat-card::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 204, 255, 0.05), transparent);
-            opacity: 0;
-            transition: 0.5s;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
         }
-        .stat-card:hover::after {
-            opacity: 1;
-        }
-        .stat-card:nth-child(1) { animation: cardSuperBoom 0.6s ease backwards 0.05s; }
-        .stat-card:nth-child(2) { animation: cardSuperBoom 0.6s ease backwards 0.15s; }
-        .stat-card:nth-child(3) { animation: cardSuperBoom 0.6s ease backwards 0.25s; }
-        .stat-card:nth-child(4) { animation: cardSuperBoom 0.6s ease backwards 0.35s; }
-        
-        @keyframes cardSuperBoom {
-            from { opacity: 0; transform: translateX(-60px) rotate(-5deg) scale(0.5); }
-            to { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 10px 40px rgba(0, 200, 255, 0.15);
-            border-left-color: #ff00aa;
-        }
-        
+        .stat-card.danger::before { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); }
+        .stat-card.warning::before { background: var(--neon-orange); box-shadow: 0 0 10px var(--neon-orange); }
+        .stat-card.good::before { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+
         .stat-card .label {
-            font-size: 10px;
-            color: #5a7a9a;
+            font-size: 9px;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            font-weight: 700;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
         }
         .stat-card .value {
-            font-size: 18px;
-            font-weight: 900;
-            margin-top: 3px;
-            transition: all 0.5s ease;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 6px;
+            color: white;
         }
-        
-        .value.danger {
-            color: #ff4455;
-            animation: dangerSuperPulse 1s ease-in-out infinite;
-        }
-        .value.warning {
-            color: #ffaa33;
-            animation: warningSuperPulse 1.5s ease-in-out infinite;
-        }
-        .value.good {
-            color: #44dd88;
-        }
-        
-        @keyframes dangerSuperPulse {
-            0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 20px rgba(255, 68, 85, 0.3); }
-            50% { opacity: 0.5; transform: scale(1.15); text-shadow: 0 0 60px rgba(255, 68, 85, 0.6); }
-        }
-        @keyframes warningSuperPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.1); text-shadow: 0 0 40px rgba(255, 170, 51, 0.4); }
-        }
+        .value.danger { color: var(--neon-red); text-shadow: 0 0 15px rgba(255, 42, 109, 0.5); }
+        .value.warning { color: var(--neon-orange); text-shadow: 0 0 15px rgba(255, 157, 0, 0.5); }
+        .value.good { color: var(--neon-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.5); }
 
-        /* ============================================
-           БЕЙДЖ — ЭПИЧНЫЙ
-           ============================================ */
+        /* ===== СТАТУС И ОПИСАНИЕ ===== */
         .badge-status {
-            display: inline-block;
-            padding: 6px 20px;
-            border-radius: 20px;
-            font-weight: 900;
-            font-size: 12px;
-            text-align: center;
-            margin: 4px 0;
-            transition: all 0.5s ease;
-            position: relative;
-            z-index: 1;
-            animation: badgeSuperBoom 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-        @keyframes badgeSuperBoom {
-            from { opacity: 0; transform: scale(0.3) rotate(-15deg); }
-            to { opacity: 1; transform: scale(1) rotate(0deg); }
-        }
-        
-        .badge-danger {
-            background: rgba(68, 17, 34, 0.8);
-            color: #ff4455;
-            border: 1px solid #ff4455;
-            box-shadow: 0 0 50px rgba(255, 68, 85, 0.3);
-            animation: badgeDangerSuper 1.5s ease-in-out infinite;
-        }
-        @keyframes badgeDangerSuper {
-            0%, 100% { box-shadow: 0 0 50px rgba(255, 68, 85, 0.3); transform: scale(1); }
-            50% { box-shadow: 0 0 100px rgba(255, 68, 85, 0.6); transform: scale(1.05); }
-        }
-        
-        .badge-warning {
-            background: rgba(51, 34, 0, 0.8);
-            color: #ffaa33;
-            border: 1px solid #ffaa33;
-            box-shadow: 0 0 50px rgba(255, 170, 51, 0.3);
-            animation: badgeWarningSuper 2s ease-in-out infinite;
-        }
-        @keyframes badgeWarningSuper {
-            0%, 100% { box-shadow: 0 0 50px rgba(255, 170, 51, 0.3); }
-            50% { box-shadow: 0 0 100px rgba(255, 170, 51, 0.6); }
-        }
-        
-        .badge-good {
-            background: rgba(0, 51, 34, 0.8);
-            color: #44dd88;
-            border: 1px solid #44dd88;
-            box-shadow: 0 0 50px rgba(68, 221, 136, 0.3);
-        }
-
-        /* ============================================
-           ОПИСАНИЕ
-           ============================================ */
-        #descriptionText {
-            background: rgba(0, 10, 20, 0.5);
-            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
             border-radius: 12px;
-            margin: 8px 0;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+            animation: badgePulse 2s infinite;
+        }
+        @keyframes badgePulse { 0%, 100% { box-shadow: 0 0 0px transparent; } 50% { box-shadow: 0 0 15px currentColor; } }
+        
+        .badge-danger { background: rgba(255, 42, 109, 0.1); color: var(--neon-red); border-color: rgba(255, 42, 109, 0.3); }
+        .badge-warning { background: rgba(255, 157, 0, 0.1); color: var(--neon-orange); border-color: rgba(255, 157, 0, 0.3); }
+        .badge-good { background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border-color: rgba(0, 255, 157, 0.3); }
+
+        #descriptionText {
             font-size: 13px;
             line-height: 1.7;
-            border: 1px solid rgba(26, 58, 85, 0.2);
-            color: #a0b8d0;
-            flex: 1;
-            overflow-y: auto;
-            position: relative;
-            z-index: 1;
-            transition: all 0.5s ease;
+            color: #cbd5e1;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 16px;
+            border-left: 3px solid var(--neon-cyan);
+            font-family: 'Inter', sans-serif;
         }
-        #descriptionText:hover {
-            border-color: rgba(0, 204, 255, 0.3);
-        }
-        
-        #descriptionText::-webkit-scrollbar { width: 3px; }
-        #descriptionText::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #00ccff, #ff00aa); border-radius: 10px; }
 
-        /* ============================================
-           ФУТЕР
-           ============================================ */
         .stats-footer {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 10px;
-            color: #335577;
-            margin-top: 4px;
-            border-top: 1px solid rgba(26, 58, 85, 0.15);
-            padding-top: 8px;
-            position: relative;
-            z-index: 1;
+            color: #475569;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+            font-family: 'JetBrains Mono', monospace;
         }
-        #clickCounter {
-            color: #00ccff;
-            font-weight: bold;
-        }
+        #clickCounter { color: var(--neon-cyan); font-weight: 700; }
 
-        /* ============================================
-           АДАПТИВ
-           ============================================ */
-        @media (max-width: 900px) {
+        /* ===== АДАПТИВ ===== */
+        @media (max-width: 800px) {
             .panel {
-                right: 10px;
-                width: 340px;
-                padding: 18px 16px;
+                top: auto; bottom: 0; right: 0; left: 0;
+                width: 100%;
+                max-height: 60vh;
+                border-radius: 24px 24px 0 0;
+                border-left: none; border-right: none; border-bottom: none;
+                padding: 20px;
+                animation: panelSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             }
-            #cityName { font-size: 22px; }
-            .stat-card .value { font-size: 16px; }
+            @keyframes panelSlideUp { from { transform: translateY(100%); filter: blur(10px); } to { transform: translateY(0); filter: blur(0); } }
+            .panel.minimized { max-height: 72px !important; border-radius: 24px 24px 0 0; }
+            #cityName { font-size: 24px; }
+            .stat-card .value { font-size: 22px; }
         }
-        
-        @media (max-width: 600px) {
-            .panel {
-                right: 5px;
-                bottom: 5px;
-                top: auto;
-                transform: none;
-                width: calc(100% - 10px);
-                max-height: 55vh;
-                border-radius: 16px;
-                animation: none;
-            }
-            .panel:hover {
-                transform: scale(1.02);
-            }
-            @keyframes panelFloat {
-                0%, 100% { transform: translateY(0px); }
-                50% { transform: translateY(-5px); }
-            }
-            .panel:hover {
-                transform: scale(1.02);
-            }
-            .search-box {
-                flex-direction: column;
-            }
-            .search-box button {
-                padding: 12px;
-            }
-            .grid-2col {
-                grid-template-columns: 1fr 1fr;
-                gap: 5px;
-            }
-            .stat-card {
-                padding: 8px 10px;
-            }
-            .stat-card .value {
-                font-size: 14px;
-            }
-            .examples span {
-                font-size: 10px;
-                padding: 3px 10px;
-            }
-            #cityName {
-                font-size: 20px;
-            }
-            .panel-header h1 {
-                font-size: 18px;
-            }
+        @media (max-width: 400px) {
+            .grid-2col { grid-template-columns: 1fr; }
+            .panel { padding: 16px; }
+            .search-box { flex-direction: column; }
+            .search-box button { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<!-- ===== ЧАСТИЦЫ (ЗВЁЗДЫ) ===== -->
-<canvas id="particles-canvas"></canvas>
-
-<!-- ===== КАРТА (ВЕСЬ ЭКРАН) ===== -->
-<div class="map-wrapper" id="mapWrapper">
-    <div id="map"></div>
+<!-- ЭКРАН ЗАГРУЗКИ -->
+<div id="boot-screen">
+    <div class="boot-text">> ИНИЦИАЛИЗАЦИЯ NEURO-MAP v4.2...</div>
+    <div class="boot-text" id="boot-log" style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">Загрузка климатических моделей...</div>
+    <div class="boot-bar"></div>
 </div>
 
-<!-- ===== ПАНЕЛЬ (ПАРИТ НАД КАРТОЙ) ===== -->
-<div class="panel">
-    <div class="panel-header">
-        <span class="icon">⚡</span>
-        <h1>Прогноз 2075</h1>
+<!-- ЭФФЕКТЫ ПОВЕРХ ВСЕГО -->
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- КАРТА -->
+<div id="map"></div>
+
+<!-- ПАНЕЛЬ -->
+<div class="panel" id="mainPanel">
+    <div class="panel-header" id="panelHeader">
+        <span class="icon">🌐</span>
+        <div style="flex: 1;">
+            <h1>NEURO-MAP 2055</h1>
+            <div class="sub">Климатический прогноз • AI v4.2</div>
+        </div>
+        <button class="toggle-btn" id="toggleBtn" title="Свернуть/Развернуть">▼</button>
     </div>
-    <div class="sub">🔮 КЛИМАТИЧЕСКАЯ МОДЕЛЬ</div>
 
     <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Введите город, место...">
-        <button id="searchBtn">🚀 НАЙТИ</button>
+        <input type="text" id="searchInput" placeholder="Введите город или координаты..." autocomplete="off">
+        <button id="searchBtn">СКАНИРОВАТЬ</button>
     </div>
 
-    <div class="examples">
-        <span data-place="Москва">Москва</span>
-        <span data-place="Санкт-Петербург">СПб</span>
-        <span data-place="Нью-Йорк">Нью-Йорк</span>
-        <span data-place="Лондон">Лондон</span>
-        <span data-place="Токио">Токио</span>
-        <span data-place="Сидней">Сидней</span>
-        <span data-place="Каир">Каир</span>
-        <span data-place="Париж">Париж</span>
-        <span data-place="Пекин">Пекин</span>
-        <span data-place="Рио">Рио</span>
+    <div class="chips" id="exampleChips">
+        <span class="chip" data-place="Москва">Москва</span>
+        <span class="chip" data-place="Санкт-Петербург">СПб</span>
+        <span class="chip" data-place="Нью-Йорк">Нью-Йорк</span>
+        <span class="chip" data-place="Токио">Токио</span>
+        <span class="chip" data-place="Дубай">Дубай</span>
+        <span class="chip" data-place="Сидней">Сидней</span>
     </div>
 
     <div id="resultBlock">
-        <div id="cityName">—</div>
-        <div id="cityCoords">📍 Координаты: —</div>
-        
+        <div class="city-header">
+            <div>
+                <div id="cityName">—</div>
+                <div id="cityCoords"><span class="live-indicator"></span> <span id="coordsText">—</span></div>
+            </div>
+        </div>
+
         <div class="grid-2col">
-            <div class="stat-card">
+            <div class="stat-card" id="cardTemp">
                 <div class="label">🌡️ Температура</div>
                 <div class="value" id="tempValue">—</div>
             </div>
-            <div class="stat-card">
-                <div class="label">🌊 Уровень воды</div>
+            <div class="stat-card" id="cardWater">
+                <div class="label">🌊 Уровень моря</div>
                 <div class="value" id="waterValue">—</div>
             </div>
-            <div class="stat-card">
-                <div class="label">🌪️ Экстремальные явления</div>
-                <div class="value" id="extremeValue" style="font-size:13px;">—</div>
+            <div class="stat-card" id="cardAir">
+                <div class="label">💨 Качество воздуха</div>
+                <div class="value" id="airValue">—</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="cardHabit">
                 <div class="label">🏙️ Пригодность</div>
                 <div class="value" id="habitableValue">—</div>
             </div>
         </div>
 
-        <div id="statusBadge" class="badge-status">⚠️ ОЦЕНКА РИСКА</div>
-        <div id="descriptionText">Кликни на карту или найди место через поиск...</div>
+        <div id="statusBadge" class="badge-status">⏳ ОЖИДАНИЕ ДАННЫХ</div>
         
+        <div id="descriptionText">
+            Выберите точку на карте или введите название города для получения детального климатического прогноза на 2055 год.
+        </div>
+
         <div class="stats-footer">
-            <span id="clickCounter">👆 Кликов: 0</span>
-            <span>🌍 OpenStreetMap</span>
+            <span id="clickCounter">👆 СКАНИРОВАНИЙ: 0</span>
+            <span>🛰️ OSM (FREE) / NEURO-MODEL</span>
         </div>
     </div>
 </div>
@@ -708,322 +674,288 @@
 
 <script>
     // ============================================
-    // 0. ЧАСТИЦЫ (ЗВЁЗДЫ) НА CANVAS
+    // 0. BOOT SEQUENCE (Эпичная загрузка)
     // ============================================
-    const canvas = document.getElementById('particles-canvas');
-    const ctx = canvas.getContext('2d');
-    let stars = [];
-    
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    
-    class Star {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.size = Math.random() * 2 + 0.5;
-            this.speed = 0.02 + Math.random() * 0.03;
-            this.opacity = Math.random() * 0.8 + 0.2;
-            this.twinkleSpeed = 0.02 + Math.random() * 0.03;
+    const bootLogs = [
+        "Подключение к спутниковой сети...",
+        "Загрузка климатических моделей 2055...",
+        "Калибровка нейросети...",
+        "Доступ разрешен."
+    ];
+    let logIndex = 0;
+    const bootLogEl = document.getElementById('boot-log');
+    const bootInterval = setInterval(() => {
+        if (logIndex < bootLogs.length) {
+            bootLogEl.textContent = `> ${bootLogs[logIndex]}`;
+            logIndex++;
         }
-        update() {
-            this.opacity += Math.sin(Date.now() * this.twinkleSpeed) * 0.01;
-            this.opacity = Math.max(0.1, Math.min(1, this.opacity));
-        }
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-            ctx.fill();
-            
-            // Свечение
-            if (this.size > 1.5) {
-                ctx.shadowColor = 'rgba(150, 200, 255, 0.3)';
-                ctx.shadowBlur = 10;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-        }
-    }
-    
-    for (let i = 0; i < 200; i++) {
-        stars.push(new Star());
-    }
-    
-    function animateStars() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        stars.forEach(star => {
-            star.update();
-            star.draw();
-        });
-        requestAnimationFrame(animateStars);
-    }
-    animateStars();
+    }, 300);
+
+    setTimeout(() => {
+        clearInterval(bootInterval);
+        document.getElementById('boot-screen').classList.add('hidden');
+    }, 1800);
 
     // ============================================
-    // 1. КАРТА (ВЕСЬ ЭКРАН)
+    // 1. ИНИЦИАЛИЗАЦИЯ КАРТЫ
     // ============================================
     const map = L.map('map', {
-        center: [55.7558, 37.6173],
-        zoom: 5,
-        zoomControl: true,
-        fadeAnimation: true,
-        zoomAnimation: true,
-        markerZoomAnimation: true
+        center: [40, 40],
+        zoom: 3,
+        zoomControl: false,
+        worldCopyJump: true,
+        attributionControl: true
     });
 
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        subdomains: 'abc',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19
     }).addTo(map);
 
     let currentMarker = null;
-    let clickCount = 0;
+    let scanCount = 0;
+    let searchHistory = [];
+    let isMinimized = false;
 
     // ============================================
-    // 2. БАЗА ЗНАНИЙ
+    // 2. ЛОГИКА ПАНЕЛИ
     // ============================================
-    const cityKnowledge = {
-        'москва': {
-            tempRise: 3.2,
-            waterRise: 0.3,
-            extreme: '🌧️ Увеличение осадков',
-            habitable: 'Благоприятно',
-            description: 'Москва станет теплее: зимы мягче, снега меньше. Увеличатся дожди, но серьёзных угроз нет.'
-        },
-        'санкт-петербург': {
-            tempRise: 3.5,
-            waterRise: 0.8,
-            extreme: '🌊 Защита от наводнений',
-            habitable: 'Умеренно',
-            description: 'Петербургу требуется защита от Невы. Уровень воды поднимется, нужны новые дамбы.'
-        },
-        'нью-йорк': {
-            tempRise: 4.5,
-            waterRise: 2.0,
-            extreme: '🌀 Ураганы',
-            habitable: 'Сложно',
-            description: 'Нью-Йорк столкнётся с сильными ураганами. Уровень океана поднимется, Манхэттен в зоне риска.'
-        },
-        'лондон': {
-            tempRise: 3.8,
-            waterRise: 0.9,
-            extreme: '🌧️ Ливни',
-            habitable: 'Умеренно',
-            description: 'Лондон станет влажнее. Уровень Темзы поднимется, восточные районы в зоне риска.'
-        },
-        'токио': {
-            tempRise: 4.2,
-            waterRise: 1.2,
-            extreme: '🌀 Тайфуны',
-            habitable: 'Сложно',
-            description: 'Токио под угрозой супертайфунов. Город переносит инфраструктуру на возвышенности.'
-        },
-        'сидней': {
-            tempRise: 3.5,
-            waterRise: 0.7,
-            extreme: '🔥 Пожары и засухи',
-            habitable: 'Умеренно',
-            description: 'Сидней станет жарче и суше. Пожары вокруг города — ежегодная угроза.'
-        },
-        'каир': {
-            tempRise: 5.5,
-            waterRise: 0.2,
-            extreme: '☀️ Экстремальная жара',
-            habitable: 'Критично',
-            description: 'Каир столкнётся с невыносимой жарой: летом до +50°C. Нил мелеет, возможна массовая миграция.'
-        },
-        'париж': {
-            tempRise: 3.6,
-            waterRise: 0.6,
-            extreme: '🌧️ Ливни',
-            habitable: 'Благоприятно',
-            description: 'Париж станет теплее. Ливни учащаются, но серьёзных угроз нет.'
-        },
-        'пекин': {
-            tempRise: 4.0,
-            waterRise: 0.3,
-            extreme: '🌪️ Пыльные бури',
-            habitable: 'Сложно',
-            description: 'Пекин сталкивается с пыльными бурями и жарой. Требуется модернизация водоснабжения.'
-        },
-        'рио-де-жанейро': {
-            tempRise: 4.8,
-            waterRise: 1.5,
-            extreme: '🌀 Штормы и оползни',
-            habitable: 'Сложно',
-            description: 'Рио под угрозой штормов. Оползни в бедных кварталах становятся опаснее.'
-        },
-        'берлин': {
-            tempRise: 3.4,
-            waterRise: 0.3,
-            extreme: '🌤️ Умеренные изменения',
-            habitable: 'Благоприятно',
-            description: 'Берлин станет теплее. Изменения умеренны, город адаптируется без серьёзных проблем.'
+    const mainPanel = document.getElementById('mainPanel');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const panelHeader = document.getElementById('panelHeader');
+
+    function togglePanel() {
+        isMinimized = !isMinimized;
+        if (isMinimized) {
+            mainPanel.classList.add('minimized');
+        } else {
+            mainPanel.classList.remove('minimized');
         }
-    };
+    }
+
+    toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePanel();
+    });
+
+    panelHeader.addEventListener('click', () => {
+        if (isMinimized) togglePanel();
+    });
 
     // ============================================
-    // 3. ПРОГНОЗ
+    // 3. ЭФФЕКТ "ДЕШИФРОВКИ" ТЕКСТА (HACKER STYLE)
     // ============================================
-    function getClimateForecast(lat, lon, placeName) {
-        const lowerName = placeName ? placeName.toLowerCase() : '';
+    function decryptText(element, finalText, duration = 800) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&!?';
+        let iterations = 0;
+        const maxIterations = finalText.length;
+        const stepTime = duration / maxIterations;
         
-        for (const [key, data] of Object.entries(cityKnowledge)) {
-            if (lowerName.includes(key)) {
-                return { ...data };
+        const interval = setInterval(() => {
+            element.innerText = finalText.split('')
+                .map((letter, index) => {
+                    if (index < iterations) return finalText[index];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                })
+                .join('');
+            
+            iterations += 1/2; // Скорость расшифровки
+            if (iterations >= maxIterations) {
+                element.innerText = finalText;
+                clearInterval(interval);
+            }
+        }, stepTime);
+    }
+
+    function decryptNumber(element, finalNum, duration = 800, suffix = '') {
+        let start = 0;
+        const range = finalNum - start;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function (easeOutExpo)
+            const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            
+            const currentVal = (start + (range * ease)).toFixed(1);
+            
+            // Добавляем случайные символы для эффекта глюка во время анимации
+            if (progress < 0.8) {
+                const glitchChars = '0123456789';
+                const glitched = currentVal.split('').map(c => Math.random() > 0.7 ? glitchChars[Math.floor(Math.random()*10)] : c).join('');
+                element.innerHTML = (finalNum > 0 ? '+' : '') + glitched + suffix;
+            } else {
+                element.innerHTML = (finalNum > 0 ? '+' : '') + currentVal + suffix;
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                element.innerHTML = (finalNum > 0 ? '+' : '') + finalNum + suffix;
             }
         }
-
-        const absLat = Math.abs(lat);
-        const isCoastal = Math.abs(lon) > 30 && Math.abs(lon) < 150;
-        const isTropical = absLat < 23.5;
-        const isPolar = absLat > 66.5;
-        const isDesert = absLat > 20 && absLat < 40 && !isCoastal;
-
-        let tempRise = 2.8;
-        if (isTropical) tempRise = 4.5;
-        else if (isPolar) tempRise = 4.2;
-        else if (isDesert) tempRise = 5.0;
-        else if (absLat > 40 && absLat < 60 && !isCoastal) tempRise = 3.2;
-        tempRise = Math.round((tempRise + (Math.random() - 0.5) * 0.4) * 10) / 10;
-
-        let waterRise = 0.2;
-        if (isCoastal && absLat < 40) waterRise = 1.8;
-        else if (isCoastal && absLat < 60) waterRise = 1.0;
-        waterRise = Math.round((waterRise + (Math.random() - 0.5) * 0.3) * 10) / 10;
-
-        let extreme = '🌤️ Умеренные изменения';
-        let description = '';
-        
-        if (isPolar) {
-            extreme = '❄️ Таяние вечной мерзлоты';
-            description = 'Арктика нагревается быстрее всего. Таяние льдов изменит экосистемы.';
-        }
-        else if (isTropical && isCoastal) {
-            extreme = '🌀 Ураганы и штормы';
-            description = 'Тропические регионы столкнутся с усилением ураганов.';
-        }
-        else if (isTropical && !isCoastal) {
-            extreme = '🔥 Аномальная жара';
-            description = 'В тропиках станет ещё жарче. Учащаются засухи.';
-        }
-        else if (isDesert) {
-            extreme = '☀️ Экстремальная жара';
-            description = 'Пустыни расширяются. Температура достигает +50°C.';
-        }
-        else if (absLat > 40 && absLat < 60 && isCoastal) {
-            extreme = '🌊 Повышение уровня моря';
-            description = 'Прибрежные зоны сталкиваются с подъёмом воды.';
-        }
-        else if (absLat > 40 && absLat < 60 && !isCoastal) {
-            extreme = '🌧️ Изменение осадков';
-            description = 'Континентальные регионы становятся влажнее.';
-        }
-        else {
-            extreme = '🌤️ Умеренные изменения';
-            description = 'Изменения климата будут заметны, но без катастроф.';
-        }
-
-        let habitable = 'Благоприятно';
-        let riskNote = '';
-        
-        if (tempRise > 5.5 || waterRise > 2.2) {
-            habitable = 'Критично';
-            riskNote = 'Условия становятся опасными. ';
-        } else if (tempRise > 4.2 || waterRise > 1.5) {
-            habitable = 'Сложно';
-            riskNote = 'Потребуется адаптация. ';
-        } else {
-            habitable = 'Благоприятно';
-            riskNote = 'Изменения умеренны. ';
-        }
-
-        let fullDescription = riskNote;
-        fullDescription += `Температура вырастет на ${tempRise}°C. `;
-        fullDescription += `Уровень воды изменится на ${waterRise} м. `;
-        fullDescription += description;
-
-        return { tempRise, waterRise, extreme, habitable, description: fullDescription };
+        requestAnimationFrame(update);
     }
 
     // ============================================
-    // 4. ПОКАЗ РЕЗУЛЬТАТА
+    // 4. БАЗА ЗНАНИЙ И ПРОГНОЗ
+    // ============================================
+    const cityKnowledge = {
+        'москва': { temp: 3.2, water: 0.2, air: 'Умеренное', habit: 'Благоприятно', desc: 'Зимы станут мягче, снежный покров сократится на 40%. Учащение летних ливней. Город успешно адаптирует инфраструктуру.' },
+        'санкт-петербург': { temp: 3.5, water: 0.9, air: 'Среднее', habit: 'Требует адаптации', desc: 'Критическая необходимость в модернизации дамбы. Риск подтопления исторического центра при штормовых нагонах.' },
+        'нью-йорк': { temp: 4.1, water: 1.8, air: 'Низкое', habit: 'Сложно', desc: 'Манхэттен и прибрежные районы в зоне высокого риска. Требуется строительство гигантских волнорезов.' },
+        'лондон': { temp: 3.8, water: 1.1, air: 'Среднее', habit: 'Умеренно', desc: 'Темза поднимется на 1.1м. Барьер Темзы будет работать на пределе мощности.' },
+        'токио': { temp: 4.5, water: 1.4, air: 'Хорошее', habit: 'Сложно', desc: 'Угроза супертайфунов категории 5. Город переносит инфраструктуру на возвышенности.' },
+        'сидней': { temp: 3.9, water: 0.6, air: 'Низкое (дым)', habit: 'Умеренно', desc: 'Экстремальные пожароопасные сезоны станут нормой. Дефицит пресной воды.' },
+        'дубай': { temp: 5.8, water: 0.8, air: 'Критическое', habit: 'Опасно', desc: 'Летние температуры превысят +55°C с высокой влажностью. Жизнь в кондиционируемых куполах.' },
+        'каир': { temp: 5.2, water: 0.1, air: 'Очень низкое', habit: 'Критично', desc: 'Нил мелеет. Массовая внутренняя миграция из-за невыносимой жары.' },
+        'париж': { temp: 3.6, water: 0.5, air: 'Среднее', habit: 'Благоприятно', desc: 'Секва станет теплее. Городская зелень помогает смягчать эффект жары.' },
+        'пекин': { temp: 4.2, water: 0.3, air: 'Низкое', habit: 'Сложно', desc: 'Пыльные бури из пустыни Гоби усилятся. Жесткий контроль водных ресурсов.' },
+        'рио-де-жанейро': { temp: 4.6, water: 1.6, air: 'Среднее', habit: 'Сложно', desc: 'Оползни в фавелах станут смертельно опасными. Штормовые нагоны.' },
+        'мале': { temp: 3.5, water: 2.5, air: 'Хорошее', habit: 'Критично', desc: 'Мальдивы под угрозой полного затопления. Строительство плавучих городов.' },
+        'якутск': { temp: 6.5, water: 0.4, air: 'Среднее', habit: 'Экстремально', desc: 'Таяние вечной мерзлоты разрушает фундаменты. Высвобождение метана.' }
+    };
+
+    function pseudoRandom(lat, lon) {
+        const x = Math.sin(lat * 12.9898 + lon * 78.233) * 43758.5453;
+        return x - Math.floor(x);
+    }
+
+    function getClimateForecast(lat, lon, placeName) {
+        const lowerName = placeName ? placeName.toLowerCase() : '';
+        for (const [key, data] of Object.entries(cityKnowledge)) {
+            if (lowerName.includes(key)) return { ...data, isKnown: true };
+        }
+
+        const absLat = Math.abs(lat);
+        const rand = pseudoRandom(lat, lon);
+        
+        let temp = 2.5 + (rand * 2);
+        let water = 0.2 + (rand * 1.5);
+        let air = 'Среднее';
+        let habit = 'Умеренно';
+        let desc = '';
+
+        if (absLat > 65) {
+            temp = 5.0 + (rand * 2); air = 'Среднее (выбросы мерзлоты)'; habit = 'Экстремально';
+            desc = 'Арктическое усиление: таяние вечной мерзлоты разрушает инфраструктуру. Высвобождение метана.';
+        } else if (absLat < 25) {
+            temp = 4.5 + (rand * 1.5); air = rand > 0.5 ? 'Низкое' : 'Критическое'; habit = temp > 5.5 ? 'Опасно' : 'Сложно';
+            desc = 'Тропический регион: экстремальная жара, влажность и риск ураганов.';
+        } else if (absLat > 30 && absLat < 45 && rand > 0.6) {
+            temp = 4.0 + (rand * 1.5); air = 'Низкое (пыль)'; habit = 'Сложно';
+            desc = 'Субтропический пояс: расширение пустынь, хроническая нехватка воды.';
+        } else {
+            desc = 'Умеренные климатические изменения. Требуется адаптация сельского хозяйства и энергосетей.';
+        }
+
+        const isCoastal = (lon % 30 < 5 || lon % 30 > 25);
+        if (isCoastal && absLat < 60) {
+            water = Math.min(water + 0.8, 3.0);
+            if (water > 1.5) habit = 'Сложно';
+        }
+
+        return { temp: Math.round(temp * 10) / 10, water: Math.round(water * 10) / 10, air, habit, desc, isKnown: false };
+    }
+
+    // ============================================
+    // 5. ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ С АНИМАЦИЯМИ
     // ============================================
     function showResult(placeName, lat, lon) {
+        if (isMinimized) togglePanel();
+
         const data = getClimateForecast(lat, lon, placeName);
-        clickCount++;
-        document.getElementById('clickCounter').textContent = `👆 Кликов: ${clickCount}`;
+        scanCount++;
+        document.getElementById('clickCounter').textContent = `👆 СКАНИРОВАНИЙ: ${scanCount}`;
 
         const resultBlock = document.getElementById('resultBlock');
         resultBlock.classList.remove('visible');
 
+        if (!searchHistory.includes(placeName)) {
+            searchHistory.unshift(placeName);
+            if (searchHistory.length > 6) searchHistory.pop();
+            updateHistoryChips();
+        }
+
         setTimeout(() => {
-            document.getElementById('cityName').textContent = placeName || 'Неизвестное место';
-            document.getElementById('cityCoords').textContent = `📍 ${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+            // Дешифровка названия города
+            decryptText(document.getElementById('cityName'), placeName || 'НЕИЗВЕСТНАЯ ЛОКАЦИЯ', 600);
+            document.getElementById('coordsText').textContent = `${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E`;
+
+            // Дешифровка чисел
+            decryptNumber(document.getElementById('tempValue'), data.temp, 1000, '°C');
+            document.getElementById('waterValue').textContent = `+${data.water} м`;
+            decryptText(document.getElementById('airValue'), data.air, 500);
+            decryptText(document.getElementById('habitableValue'), data.habit, 500);
+
+            // Цветовая индикация
+            const tempCard = document.getElementById('cardTemp');
+            tempCard.className = `stat-card ${data.temp > 4.5 ? 'danger' : data.temp > 3.5 ? 'warning' : 'good'}`;
             
-            const tempEl = document.getElementById('tempValue');
-            tempEl.textContent = `+${data.tempRise}°C`;
-            tempEl.className = 'value ' + (data.tempRise > 5.0 ? 'danger' : data.tempRise > 3.8 ? 'warning' : 'good');
-            
-            const waterEl = document.getElementById('waterValue');
-            waterEl.textContent = `${data.waterRise} м`;
-            waterEl.className = 'value ' + (data.waterRise > 1.8 ? 'danger' : data.waterRise > 1.0 ? 'warning' : 'good');
-            
-            document.getElementById('extremeValue').textContent = data.extreme;
-            
-            const habEl = document.getElementById('habitableValue');
-            habEl.textContent = data.habitable;
-            habEl.className = 'value ' + (data.habitable === 'Критично' ? 'danger' : data.habitable === 'Сложно' ? 'warning' : 'good');
-            
+            const waterCard = document.getElementById('cardWater');
+            waterCard.className = `stat-card ${data.water > 1.5 ? 'danger' : data.water > 0.8 ? 'warning' : 'good'}`;
+
+            // Статус
             const badge = document.getElementById('statusBadge');
-            if (data.habitable === 'Критично') {
+            if (data.habit === 'Критично' || data.habit === 'Опасно' || data.habit === 'Экстремально') {
                 badge.className = 'badge-status badge-danger';
-                badge.textContent = '🚨 ВЫСОКИЙ РИСК';
-            } else if (data.habitable === 'Сложно') {
+                badge.textContent = '🚨 ВЫСОКИЙ РИСК ЖИЗНЕДЕЯТЕЛЬНОСТИ';
+            } else if (data.habit === 'Сложно' || data.habit === 'Требует адаптации') {
                 badge.className = 'badge-status badge-warning';
-                badge.textContent = '⚠️ ТРЕБУЕТСЯ АДАПТАЦИЯ';
+                badge.textContent = '⚠️ ТРЕБУЕТСЯ МОДЕРНИЗАЦИЯ';
             } else {
                 badge.className = 'badge-status badge-good';
                 badge.textContent = '✅ ОТНОСИТЕЛЬНАЯ БЕЗОПАСНОСТЬ';
             }
-            
-            document.getElementById('descriptionText').textContent = data.description;
+
+            decryptText(document.getElementById('descriptionText'), data.desc, 800);
             resultBlock.classList.add('visible');
-        }, 200);
+            
+            document.getElementById('mainPanel').classList.remove('scanning');
+            document.getElementById('searchBtn').disabled = false;
+            document.getElementById('searchBtn').textContent = 'СКАНИРОВАТЬ';
+        }, 400);
+    }
+
+    function updateHistoryChips() {
+        const container = document.getElementById('exampleChips');
+        container.innerHTML = '';
+        searchHistory.forEach((place, index) => {
+            const chip = document.createElement('span');
+            chip.className = 'chip';
+            chip.textContent = place;
+            chip.style.animation = `panelMaterialize 0.3s ease backwards ${index * 0.05}s`;
+            chip.onclick = () => {
+                document.getElementById('searchInput').value = place;
+                performSearch(place);
+            };
+            container.appendChild(chip);
+        });
     }
 
     // ============================================
-    // 5. МАРКЕР
+    // 6. МАРКЕР И ЭФФЕКТЫ
     // ============================================
     function addMarker(lat, lon, label) {
-        if (currentMarker) {
-            map.removeLayer(currentMarker);
-        }
+        if (currentMarker) map.removeLayer(currentMarker);
 
         const icon = L.divIcon({
             className: 'click-marker',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
+            html: '<div class="marker-sweep"></div><div class="marker-ring"></div><div class="marker-core"></div>',
+            iconSize: [50, 50],
+            iconAnchor: [25, 25]
         });
 
-        currentMarker = L.marker([lat, lon], { icon: icon }).addTo(map);
-        map.setView([lat, lon], Math.max(8, map.getZoom()), {
-            animate: true,
-            duration: 1.5
-        });
-        
-        showResult(label || `${lat.toFixed(2)}, ${lon.toFixed(2)}`, lat, lon);
+        currentMarker = L.marker([lat, lon], { icon }).addTo(map);
+        map.flyTo([lat, lon], Math.max(8, map.getZoom()), { duration: 1.5, easeLinearity: 0.5 });
+
+        showResult(label, lat, lon);
     }
 
-    // ============================================
-    // 6. ВСПЛЕСК
-    // ============================================
     function createRipple(x, y) {
         const ripple = document.createElement('div');
         ripple.className = 'ripple';
@@ -1031,27 +963,32 @@
         ripple.style.top = (y - 30) + 'px';
         ripple.style.width = '60px';
         ripple.style.height = '60px';
-        document.getElementById('mapWrapper').appendChild(ripple);
-        setTimeout(() => ripple.remove(), 1500);
+        document.body.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 1200);
     }
 
     // ============================================
-    // 7. КЛИК ПО КАРТЕ
+    // 7. ОБРАБОТЧИКИ СОБЫТИЙ
     // ============================================
-    map.on('click', function(e) {
+    map.on('click', function (e) {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
+
+        createRipple(e.originalEvent.clientX, e.originalEvent.clientY);
         
-        const container = document.getElementById('mapWrapper');
-        const rect = container.getBoundingClientRect();
-        const x = e.originalEvent.clientX - rect.left;
-        const y = e.originalEvent.clientY - rect.top;
-        createRipple(x, y);
-        
+        // Пульсация карты
+        const mapPane = document.getElementById('map');
+        mapPane.classList.remove('map-pulse');
+        void mapPane.offsetWidth; // trigger reflow
+        mapPane.classList.add('map-pulse');
+
+        document.getElementById('searchBtn').disabled = true;
+        document.getElementById('searchBtn').textContent = 'СКАНИРОВАНИЕ...';
+
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=ru`)
             .then(res => res.json())
             .then(data => {
-                let placeName = 'Неизвестное место';
+                let placeName = 'Точка на карте';
                 if (data.display_name) {
                     const parts = data.display_name.split(',');
                     placeName = parts.slice(0, 2).join(',').trim();
@@ -1059,71 +996,60 @@
                 addMarker(lat, lon, placeName);
             })
             .catch(() => {
-                addMarker(lat, lon, `${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+                addMarker(lat, lon, `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`);
             });
     });
 
-    // ============================================
-    // 8. ПОИСК
-    // ============================================
-    document.getElementById('searchBtn').addEventListener('click', function() {
-        const query = document.getElementById('searchInput').value.trim();
-        if (!query) return;
+    let searchTimeout;
+    function performSearch(query) {
+        if (!query.trim()) return;
+        
+        if (isMinimized) togglePanel();
 
+        document.getElementById('searchBtn').disabled = true;
+        document.getElementById('searchBtn').textContent = 'ПОИСК...';
         document.getElementById('resultBlock').classList.remove('visible');
-        document.getElementById('cityName').textContent = '⏳ ПОИСК...';
-        document.getElementById('cityName').style.color = '#6a8aaa';
 
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ru`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('cityName').style.color = '#88ddff';
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    const name = data[0].display_name.split(',')[0];
-                    addMarker(lat, lon, name);
-                } else {
-                    alert('❌ Место не найдено.');
-                    document.getElementById('cityName').textContent = '—';
-                }
-            })
-            .catch(() => {
-                alert('⚠️ Ошибка поиска. Проверьте интернет.');
-                document.getElementById('cityName').textContent = '—';
-                document.getElementById('cityName').style.color = '#88ddff';
-            });
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ru`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        const name = data[0].display_name.split(',')[0];
+                        addMarker(lat, lon, name);
+                    } else {
+                        alert('❌ Локация не найдена в базе данных 2055.');
+                        document.getElementById('searchBtn').disabled = false;
+                        document.getElementById('searchBtn').textContent = 'СКАНИРОВАТЬ';
+                    }
+                })
+                .catch(() => {
+                    alert('⚠️ Ошибка соединения с нейро-сетью.');
+                    document.getElementById('searchBtn').disabled = false;
+                    document.getElementById('searchBtn').textContent = 'СКАНИРОВАТЬ';
+                });
+        }, 600);
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', () => {
+        performSearch(document.getElementById('searchInput').value);
     });
 
-    // ============================================
-    // 9. ПРИМЕРЫ
-    // ============================================
-    document.querySelectorAll('.examples span').forEach(el => {
-        el.addEventListener('click', function() {
-            const place = this.dataset.place;
-            document.getElementById('searchInput').value = place;
-            document.getElementById('searchBtn').click();
-            
-            this.style.transform = 'scale(0.7)';
-            setTimeout(() => {
-                this.style.transform = '';
-            }, 300);
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') performSearch(this.value);
+    });
+
+    document.querySelectorAll('.chip').forEach(el => {
+        el.addEventListener('click', function () {
+            document.getElementById('searchInput').value = this.dataset.place;
+            performSearch(this.dataset.place);
         });
     });
 
-    // ============================================
-    // 10. ENTER
-    // ============================================
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') document.getElementById('searchBtn').click();
-    });
-
-    // ============================================
-    // 11. СТАРТ
-    // ============================================
-    console.log('🌍 Карта Будущего 2075 загружена!');
-    console.log('🔥 МЕГА-БОМБИЧЕСКАЯ ВЕРСИЯ 2.0!');
-    console.log('✅ Карта на весь экран, панель парит!');
+    console.log('%c NEURO-MAP 2055 INITIALIZED ', 'background: #00f3ff; color: #000; font-size: 12px; font-weight: bold; padding: 4px; border-radius: 4px;');
 </script>
 
 </body>
