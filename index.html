@@ -14,12 +14,18 @@
         :root {
             --eco-cyan: #2dd4bf;
             --eco-green: #34d399;
-            --eco-warm: #fbbf24;
+            /* ЗАМЕНА ТРЕВОЖНОГО ОРАНЖЕВОГО НА СПОКОЙНЫЙ ИНДИГО */
+            --eco-calm: #818cf8;       /* Мягкий, конструктивный цвет для "зон развития" */
+            --eco-calm-glow: rgba(129, 140, 248, 0.3);
             --bg-dark: #0f172a;
-            --panel-bg: rgba(15, 23, 42, 0.85);
-            --border-glow: rgba(45, 212, 191, 0.25);
+            --panel-bg: rgba(15, 23, 42, 0.75);
+            --border-glow: rgba(45, 212, 191, 0.2);
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
+            
+            /* Плавные кривые анимации */
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,12 +39,12 @@
             touch-action: none;
         }
 
-        /* ===== ЗАГРУЗКА ===== */
+        /* ===== ЗАГРУЗКА (Плавная и спокойная) ===== */
         #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 1s ease, visibility 1s;
+            transition: opacity 1.2s var(--ease-smooth), visibility 1.2s;
         }
         #boot-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .boot-text {
@@ -46,13 +52,14 @@
             color: var(--eco-cyan); font-size: 13px; margin-bottom: 20px; letter-spacing: 1px;
         }
         .boot-bar {
-            width: 280px; height: 2px; background: rgba(45, 212, 191, 0.15);
-            position: relative; overflow: hidden; border-radius: 2px;
+            width: 280px; height: 3px; background: rgba(45, 212, 191, 0.1);
+            position: relative; overflow: hidden; border-radius: 4px;
         }
         .boot-bar::after {
             content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%;
-            background: var(--eco-green); box-shadow: 0 0 15px var(--eco-green);
-            animation: bootLoad 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            background: linear-gradient(90deg, var(--eco-cyan), var(--eco-green));
+            box-shadow: 0 0 15px var(--eco-cyan);
+            animation: bootLoad 2.5s var(--ease-smooth) forwards;
         }
         @keyframes bootLoad { to { width: 100%; } }
 
@@ -60,47 +67,56 @@
         body::before {
             content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
-                linear-gradient(rgba(45, 212, 191, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(45, 212, 191, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px; pointer-events: none; z-index: 0;
+                linear-gradient(rgba(45, 212, 191, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(45, 212, 191, 0.02) 1px, transparent 1px);
+            background-size: 80px 80px; pointer-events: none; z-index: 0;
+            animation: gridMove 60s linear infinite;
         }
+        @keyframes gridMove { from { background-position: 0 0; } to { background-position: 80px 80px; } }
+
         .vignette {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 50%, rgba(15, 23, 42, 0.8) 100%);
+            background: radial-gradient(circle, transparent 40%, rgba(15, 23, 42, 0.9) 100%);
             pointer-events: none; z-index: 998;
         }
         #map { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #0f172a; }
-        .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.9); }
+        .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(0.8) contrast(1.1) saturate(0.8); }
         
         .leaflet-control-zoom {
             border: 1px solid var(--border-glow) !important;
-            background: rgba(15, 23, 42, 0.9) !important;
+            background: rgba(15, 23, 42, 0.8) !important;
             backdrop-filter: blur(10px); border-radius: 12px !important; overflow: hidden;
+            transition: transform 0.3s var(--ease-spring);
         }
+        .leaflet-control-zoom:hover { transform: scale(1.05); }
         .leaflet-control-zoom a {
-            color: var(--eco-cyan) !important; border-bottom: 1px solid rgba(45, 212, 191, 0.15) !important;
-            transition: all 0.3s;
+            color: var(--eco-cyan) !important; border-bottom: 1px solid rgba(45, 212, 191, 0.1) !important;
+            transition: all 0.3s var(--ease-smooth);
         }
         .leaflet-control-zoom a:hover { background: var(--eco-cyan) !important; color: #0f172a !important; }
 
-        /* ===== МАРКЕР ===== */
+        /* ===== МАРКЕР (Мягкое дыхание вместо радара) ===== */
         .click-marker { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .marker-core {
-            width: 14px; height: 14px; background: var(--eco-green); border-radius: 50%;
-            border: 2px solid #fff; box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); z-index: 2;
-            animation: softPulse 3s ease-in-out infinite;
+            width: 12px; height: 12px; background: var(--eco-green); border-radius: 50%;
+            border: 2px solid #fff; box-shadow: 0 0 15px rgba(52, 211, 153, 0.4); z-index: 2;
+            animation: softBreathe 4s ease-in-out infinite;
         }
         .marker-ripple {
             position: absolute; width: 100%; height: 100%; border-radius: 50%;
-            border: 1px solid rgba(52, 211, 153, 0.4); animation: waterRipple 3s ease-out infinite;
+            border: 1px solid rgba(52, 211, 153, 0.3); 
+            animation: calmRipple 4s ease-out infinite;
         }
-        @keyframes softPulse { 
-            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); } 
-            50% { transform: scale(1.15); box-shadow: 0 0 25px rgba(52, 211, 153, 0.7); } 
+        .marker-ripple:nth-child(2) { animation-delay: 1s; }
+        .marker-ripple:nth-child(3) { animation-delay: 2s; }
+
+        @keyframes softBreathe { 
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(52, 211, 153, 0.3); } 
+            50% { transform: scale(1.2); box-shadow: 0 0 20px rgba(52, 211, 153, 0.5); } 
         }
-        @keyframes waterRipple {
-            0% { transform: scale(0.5); opacity: 0.6; }
-            100% { transform: scale(2.8); opacity: 0; }
+        @keyframes calmRipple {
+            0% { transform: scale(0.5); opacity: 0.5; border-width: 2px; }
+            100% { transform: scale(3.5); opacity: 0; border-width: 0px; }
         }
 
         /* ===== ПАНЕЛЬ ===== */
@@ -109,15 +125,15 @@
             max-height: calc(100vh - 48px);
             background: var(--panel-bg); backdrop-filter: blur(40px) saturate(1.2);
             -webkit-backdrop-filter: blur(40px) saturate(1.2);
-            border: 1px solid var(--border-glow); border-radius: 20px; padding: 24px;
+            border: 1px solid var(--border-glow); border-radius: 24px; padding: 24px;
             display: flex; flex-direction: column; gap: 16px; overflow-y: auto; overflow-x: hidden;
-            z-index: 100; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            animation: panelSlide 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: panelSlide 0.8s var(--ease-spring);
+            transition: all 0.6s var(--ease-spring);
         }
-        @keyframes panelSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes panelSlide { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        .panel.minimized { max-height: 68px !important; padding-top: 16px; padding-bottom: 16px; cursor: pointer; overflow: hidden !important; }
+        .panel.minimized { max-height: 72px !important; padding-top: 16px; padding-bottom: 16px; cursor: pointer; overflow: hidden !important; }
         .panel.minimized .search-box, .panel.minimized .chips, .panel.minimized #resultBlock { display: none !important; }
 
         .panel::-webkit-scrollbar { width: 4px; }
@@ -125,9 +141,11 @@
         .panel::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--eco-cyan), var(--eco-green)); border-radius: 10px; }
 
         /* ===== ЗАГОЛОВОК ===== */
-        .panel-header { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); flex-shrink: 0; }
+        .panel-header { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); flex-shrink: 0; }
         .panel.minimized .panel-header { padding-bottom: 0; border-bottom: none; justify-content: space-between; }
-        .panel-header .icon { font-size: 24px; filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.4)); }
+        .panel-header .icon { font-size: 24px; filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.4)); animation: floatIcon 6s ease-in-out infinite; }
+        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
         .panel-header h1 {
             font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700;
             background: linear-gradient(90deg, var(--eco-cyan), #fff);
@@ -135,99 +153,139 @@
         }
         .sub {
             font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--eco-green);
-            letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.8;
+            letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.7;
         }
         .panel.minimized .sub { display: none; }
         .toggle-btn {
-            background: rgba(45, 212, 191, 0.08); border: 1px solid rgba(45, 212, 191, 0.3);
-            color: var(--eco-cyan); width: 30px; height: 30px; border-radius: 8px;
+            background: rgba(45, 212, 191, 0.05); border: 1px solid rgba(45, 212, 191, 0.2);
+            color: var(--eco-cyan); width: 32px; height: 32px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
-            transition: all 0.3s ease; margin-left: auto; font-size: 12px; flex-shrink: 0;
+            transition: all 0.4s var(--ease-spring); margin-left: auto; font-size: 12px; flex-shrink: 0;
         }
-        .toggle-btn:hover { background: var(--eco-cyan); color: #0f172a; }
+        .toggle-btn:hover { background: var(--eco-cyan); color: #0f172a; transform: scale(1.1); }
         .panel.minimized .toggle-btn { transform: rotate(180deg); }
 
-        /* ===== ПОИСК ===== */
+        /* ===== ПОИСК И КНОПКИ ===== */
         .search-box { display: flex; gap: 8px; flex-shrink: 0; }
         .search-box input {
-            flex: 1; padding: 12px 16px; background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; color: white;
-            font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: all 0.3s ease;
+            flex: 1; padding: 14px 16px; background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; color: white;
+            font-family: 'Inter', sans-serif; font-size: 14px; outline: none; 
+            transition: all 0.4s var(--ease-smooth);
         }
-        .search-box input:focus { border-color: var(--eco-cyan); background: rgba(0, 0, 0, 0.3); }
+        .search-box input:focus { 
+            border-color: var(--eco-cyan); background: rgba(0, 0, 0, 0.3); 
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+        }
         .search-box input::placeholder { color: #64748b; }
+
         .search-box button {
-            padding: 12px 18px; background: rgba(45, 212, 191, 0.1); border: 1px solid var(--eco-cyan);
-            border-radius: 12px; color: var(--eco-cyan); font-family: 'Rajdhani', sans-serif;
-            font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s ease;
-            text-transform: uppercase; letter-spacing: 1px;
+            padding: 14px 20px; background: rgba(45, 212, 191, 0.1); border: 1px solid var(--eco-cyan);
+            border-radius: 14px; color: var(--eco-cyan); font-family: 'Rajdhani', sans-serif;
+            font-weight: 600; font-size: 14px; cursor: pointer; position: relative; overflow: hidden;
+            transition: all 0.4s var(--ease-spring); text-transform: uppercase; letter-spacing: 1px;
         }
-        .search-box button:hover { background: var(--eco-cyan); color: #0f172a; }
-        .search-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Эффект блика на кнопке */
+        .search-box button::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.6s;
+        }
+        .search-box button:hover { 
+            background: var(--eco-cyan); color: #0f172a; 
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+            transform: translateY(-2px);
+        }
+        .search-box button:hover::after { left: 100%; }
+        .search-box button:active { transform: translateY(0) scale(0.95); }
+        .search-box button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
         /* ===== ЧИПЫ ===== */
         .chips { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
         .chip {
-            background: rgba(255, 255, 255, 0.03); padding: 6px 12px; border-radius: 16px;
-            font-size: 11px; color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.06);
-            cursor: pointer; transition: all 0.3s ease; font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.03); padding: 8px 14px; border-radius: 20px;
+            font-size: 12px; color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer; transition: all 0.3s var(--ease-spring); font-family: 'JetBrains Mono', monospace;
         }
-        .chip:hover { background: rgba(52, 211, 153, 0.1); color: var(--eco-green); border-color: rgba(52, 211, 153, 0.3); }
+        .chip:hover {
+            background: rgba(52, 211, 153, 0.1); color: var(--eco-green); 
+            border-color: rgba(52, 211, 153, 0.3); transform: translateY(-2px);
+        }
+        .chip:active { transform: scale(0.95); }
 
         /* ===== РЕЗУЛЬТАТ ===== */
         #resultBlock {
             background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px; padding: 20px; display: none; flex-direction: column;
+            border-radius: 20px; padding: 20px; display: none; flex-direction: column;
             gap: 16px; flex-shrink: 0;
         }
-        #resultBlock.visible { display: flex; animation: fadeIn 0.6s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #resultBlock.visible { display: flex; }
 
         .city-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        #cityName { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; color: white; line-height: 1.1; }
+        #cityName { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: white; line-height: 1.1; }
         #cityCoords {
             font-size: 11px; color: var(--eco-cyan); font-family: 'JetBrains Mono', monospace;
             margin-top: 6px; display: flex; align-items: center; gap: 8px;
         }
         .live-indicator {
             width: 6px; height: 6px; background: var(--eco-green); border-radius: 50%;
-            box-shadow: 0 0 8px var(--eco-green); animation: blink 3s infinite;
+            box-shadow: 0 0 8px var(--eco-green); animation: calmBlink 4s infinite;
         }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes calmBlink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 
         .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-card {
-            background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.04); transition: all 0.3s ease; position: relative;
+            background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04); position: relative;
+            opacity: 0; transform: translateY(15px);
+            transition: all 0.4s var(--ease-smooth);
         }
+        /* Анимация появления карточек с задержкой */
+        #resultBlock.visible .stat-card { animation: cardEnter 0.6s var(--ease-spring) forwards; }
+        #resultBlock.visible .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        #resultBlock.visible .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        #resultBlock.visible .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        #resultBlock.visible .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes cardEnter { to { opacity: 1; transform: translateY(0); } }
+
+        .stat-card:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.04); }
         .stat-card::before {
             content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
-            background: var(--eco-cyan); border-radius: 12px 0 0 12px;
+            background: var(--eco-cyan); border-radius: 16px 0 0 16px; transition: background 0.4s;
         }
-        .stat-card.attention::before { background: var(--eco-warm); }
+        .stat-card.attention::before { background: var(--eco-calm); box-shadow: 0 0 10px var(--eco-calm-glow); }
+        
         .stat-card .label {
             font-size: 10px; color: var(--text-secondary); text-transform: uppercase;
             letter-spacing: 1px; font-weight: 500; font-family: 'JetBrains Mono', monospace;
         }
         .stat-card .value {
-            font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700;
-            margin-top: 4px; color: white;
+            font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700;
+            margin-top: 6px; color: white; transition: color 0.4s;
         }
-        .value.attention { color: var(--eco-warm); }
+        .value.attention { color: var(--eco-calm); }
         .value.good { color: var(--eco-green); }
 
         .badge-status {
-            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px;
-            border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 600;
-            font-size: 12px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid transparent;
+            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;
+            border-radius: 12px; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+            font-size: 13px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid transparent;
+            transition: all 0.4s var(--ease-smooth);
         }
-        .badge-attention { background: rgba(251, 191, 36, 0.08); color: var(--eco-warm); border-color: rgba(251, 191, 36, 0.2); }
+        .badge-attention { 
+            background: rgba(129, 140, 248, 0.08); color: var(--eco-calm); 
+            border-color: rgba(129, 140, 248, 0.2); 
+            animation: softPulseBadge 3s infinite;
+        }
+        @keyframes softPulseBadge { 0%, 100% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0); } 50% { box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.1); } }
+        
         .badge-good { background: rgba(52, 211, 153, 0.08); color: var(--eco-green); border-color: rgba(52, 211, 153, 0.2); }
 
         #descriptionText {
-            font-size: 13px; line-height: 1.7; color: #cbd5e1; background: rgba(255, 255, 255, 0.02);
-            padding: 16px; border-radius: 12px; border-left: 2px solid var(--eco-green);
-            font-family: 'Inter', sans-serif; transition: opacity 0.4s ease;
+            font-size: 14px; line-height: 1.7; color: #cbd5e1; background: rgba(255, 255, 255, 0.02);
+            padding: 18px; border-radius: 16px; border-left: 3px solid var(--eco-green);
+            font-family: 'Inter', sans-serif; transition: all 0.5s var(--ease-smooth);
         }
 
         .stats-footer {
@@ -236,48 +294,54 @@
             flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
         }
 
-        /* ===== КНОПКА НАСТРОЕК ===== */
-        .settings-container {
-            position: fixed; top: 24px; left: 24px; z-index: 100;
-        }
+        /* ===== КНОПКА НАСТРОЕК (Плавающая) ===== */
+        .settings-container { position: fixed; top: 24px; left: 24px; z-index: 100; }
         .settings-btn {
-            width: 48px; height: 48px; border-radius: 14px;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            width: 52px; height: 52px; border-radius: 16px;
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px);
             border: 1px solid var(--border-glow); color: var(--eco-cyan);
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            cursor: pointer; transition: all 0.5s var(--ease-spring);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: floatSettings 5s ease-in-out infinite;
         }
-        .settings-btn:hover { background: var(--eco-cyan); color: #0f172a; transform: rotate(90deg); }
+        @keyframes floatSettings { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        
+        .settings-btn:hover { 
+            background: var(--eco-cyan); color: #0f172a; 
+            transform: translateY(-5px) rotate(90deg) scale(1.05);
+            box-shadow: 0 10px 30px rgba(45, 212, 191, 0.3);
+        }
         .settings-btn svg { width: 24px; height: 24px; fill: currentColor; }
 
         .lang-menu {
-            position: absolute; top: 58px; left: 0;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glow); border-radius: 12px;
+            position: absolute; top: 62px; left: 0;
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glow); border-radius: 16px;
             padding: 8px; display: flex; flex-direction: column; gap: 4px;
-            opacity: 0; visibility: hidden; transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            min-width: 120px;
+            opacity: 0; visibility: hidden; transform: translateY(-10px) scale(0.95);
+            transition: all 0.4s var(--ease-spring); min-width: 140px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
-        .lang-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
+        .lang-menu.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
         .lang-option {
-            padding: 8px 12px; border-radius: 8px; color: var(--text-secondary);
+            padding: 10px 14px; border-radius: 10px; color: var(--text-secondary);
             cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 12px;
-            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s var(--ease-smooth); display: flex; align-items: center; gap: 10px;
         }
-        .lang-option:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .lang-option:hover { background: rgba(255, 255, 255, 0.05); color: white; padding-left: 18px; }
         .lang-option.selected { background: rgba(45, 212, 191, 0.15); color: var(--eco-cyan); font-weight: bold; }
 
         /* ===== АДАПТИВ ===== */
         @media (max-width: 800px) {
             .panel {
                 top: auto; bottom: 0; right: 0; left: 0; width: 100%;
-                max-height: 60vh; border-radius: 20px 20px 0 0;
+                max-height: 65vh; border-radius: 24px 24px 0 0;
                 border-left: none; border-right: none; border-bottom: none; padding: 20px;
             }
-            .panel.minimized { max-height: 68px !important; border-radius: 20px 20px 0 0; }
+            .panel.minimized { max-height: 72px !important; border-radius: 24px 24px 0 0; }
             .settings-container { top: 16px; left: 16px; }
+            .settings-btn { width: 46px; height: 46px; }
         }
         @media (max-width: 400px) {
             .grid-2col { grid-template-columns: 1fr; }
@@ -300,7 +364,7 @@
 
 <!-- КНОПКА НАСТРОЕК -->
 <div class="settings-container">
-    <button class="settings-btn" id="settingsBtn">
+    <button class="settings-btn" id="settingsBtn" aria-label="Settings">
         <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
     </button>
     <div class="lang-menu" id="langMenu">
@@ -318,7 +382,7 @@
             <h1>NEURO-MAP 2055</h1>
             <div class="sub" data-i18n="subtitle">Forecasting & Adaptation</div>
         </div>
-        <button class="toggle-btn" id="toggleBtn" title="Toggle">▼</button>
+        <button class="toggle-btn" id="toggleBtn" aria-label="Toggle panel">▼</button>
     </div>
 
     <div class="search-box">
@@ -376,12 +440,12 @@
 
 <script>
     // ============================================
-    // 0. ЛОКАЛИЗАЦИЯ (i18n)
+    // 0. ЛОКАЛИЗАЦИЯ (i18n) - СПОКОЙНЫЕ ФОРМУЛИРОВКИ
     // ============================================
     const translations = {
         ru: {
             boot_title: "ИНИЦИАЛИЗАЦИЯ ЭКО-МОДЕЛЕЙ 2055",
-            boot_loading: "Загрузка данных устойчивого развития...",
+            boot_loading: "Синхронизация данных устойчивого развития...",
             subtitle: "Прогнозирование и адаптация",
             btn_calculate: "РАССЧИТАТЬ",
             lbl_temp: "Изменение темп.",
@@ -393,27 +457,25 @@
             lbl_requests: "ЗАПРОСОВ:",
             ph_search: "Город или координаты...",
             
-            // Значения статусов
             val_good: "Хорошее",
-            val_avg: "Среднее",
+            val_avg: "Умеренное",
             val_stable: "Стабильно",
-            val_adapt: "Адаптируется",
-            val_trans: "Трансформируется",
+            val_adapt: "В процессе адаптации",
+            val_trans: "Трансформация",
             val_fav: "Благоприятно",
             val_tech: "Высокотехнологично",
             badge_ok: "✅ УСТОЙЧИВОЕ РАЗВИТИЕ",
-            badge_warn: "⚠️ ТРЕБУЕТСЯ АКТИВНАЯ АДАПТАЦИЯ",
+            badge_warn: "🌱 ЗОНА РАЗВИТИЯ", /* Спокойная, конструктивная формулировка */
             
-            // Генератор текста
-            gen_arctic: "Арктический регион: фокус на новых инженерных решениях для стабилизации грунтов.",
-            gen_tropical: "Тропический пояс: фокус на защите от экстремальной жары и сохранении водных ресурсов.",
-            gen_temperate: "Умеренный пояс: климат становится более переменчивым, но успешно управляется.",
+            gen_arctic: "Арктический регион: фокус на новых инженерных решениях для стабилизации грунтов и сохранения экосистем.",
+            gen_tropical: "Тропический пояс: приоритет отдается защите от экстремальной жары и бережному сохранению водных ресурсов.",
+            gen_temperate: "Умеренный пояс: климат становится более переменчивым, но успешно управляется с помощью современных технологий.",
             gen_coastal_prefix: "Прибрежная зона:",
-            gen_coastal_suffix: "Укрепление береговой линии с помощью восстановления естественных экосистем."
+            gen_coastal_suffix: "Укрепление береговой линии осуществляется через восстановление естественных экосистем и биоинженерию."
         },
         en: {
             boot_title: "INITIALIZING ECO-MODELS 2055",
-            boot_loading: "Loading sustainable development data...",
+            boot_loading: "Synchronizing sustainable development data...",
             subtitle: "Forecasting & Adaptation",
             btn_calculate: "CALCULATE",
             lbl_temp: "Temp Change",
@@ -426,24 +488,24 @@
             ph_search: "City or coordinates...",
             
             val_good: "Good",
-            val_avg: "Average",
+            val_avg: "Moderate",
             val_stable: "Stable",
             val_adapt: "Adapting",
             val_trans: "Transforming",
             val_fav: "Favorable",
             val_tech: "High-Tech",
             badge_ok: "✅ SUSTAINABLE DEVELOPMENT",
-            badge_warn: "⚠️ ACTIVE ADAPTATION REQUIRED",
+            badge_warn: "🌱 AREA FOR DEVELOPMENT",
             
-            gen_arctic: "Arctic region: focus on new engineering solutions for soil stabilization.",
-            gen_tropical: "Tropical zone: focus on protection from extreme heat and water conservation.",
-            gen_temperate: "Temperate zone: climate is becoming more variable but successfully managed.",
+            gen_arctic: "Arctic region: focus on new engineering solutions for soil stabilization and ecosystem preservation.",
+            gen_tropical: "Tropical zone: priority is given to protection from extreme heat and careful water conservation.",
+            gen_temperate: "Temperate zone: climate is becoming more variable but successfully managed with modern technology.",
             gen_coastal_prefix: "Coastal zone:",
-            gen_coastal_suffix: "Shoreline reinforcement through restoration of natural ecosystems."
+            gen_coastal_suffix: "Shoreline reinforcement is achieved through restoration of natural ecosystems and bio-engineering."
         },
         kz: {
             boot_title: "ЭКО-МОДЕЛЬДЕР 2055 ИНИЦИАЛИЗАЦИЯСЫ",
-            boot_loading: "Тұрақты даму деректерін жүктеу...",
+            boot_loading: "Тұрақты даму деректерін синхрондау...",
             subtitle: "Болжау және бейімделу",
             btn_calculate: "ЕСЕПТЕУ",
             lbl_temp: "Темп. өзгерісі",
@@ -456,20 +518,20 @@
             ph_search: "Қала немесе координаттар...",
             
             val_good: "Жақсы",
-            val_avg: "Орташа",
+            val_avg: "Қалыпты",
             val_stable: "Тұрақты",
-            val_adapt: "Бейімделуде",
+            val_adapt: "Бейімделу үстінде",
             val_trans: "Трансформация",
             val_fav: "Қолайлы",
             val_tech: "Жоғары тех.",
             badge_ok: "✅ ТҰРАҚТЫ ДАМУ",
-            badge_warn: "⚠️ БЕЙІМДЕЛУ ҚАЖЕТ",
+            badge_warn: "🌱 ДАМУ АЙМАҒЫ",
             
-            gen_arctic: "Арктикалық аймақ: топырақты тұрақтандыру үшін жаңа инженерлік шешімдерге назар аударылуда.",
-            gen_tropical: "Тропиктік белдеу: шұғыл ыстықтан қорғау және су ресурстарын сақтау маңызды.",
-            gen_temperate: "Қоңыржай белдеу: климат құбылмалы болып келеді, бірақ сәтті басқарылуда.",
+            gen_arctic: "Арктикалық аймақ: топырақты тұрақтандыру және экожүйені сақтау үшін жаңа инженерлік шешімдерге назар аударылуда.",
+            gen_tropical: "Тропиктік белдеу: шұғыл ыстықтан қорғау және су ресурстарын ұтымды пайдалануға басымдық беріледі.",
+            gen_temperate: "Қоңыржай белдеу: климат құбылмалы болып келеді, бірақ заманауи технологиялар арқылы сәтті басқарылуда.",
             gen_coastal_prefix: "Жағалау аймағы:",
-            gen_coastal_suffix: "Табиғи экожүйелерді қалпына келтіру арқылы жағалауды нығайту."
+            gen_coastal_suffix: "Табиғи экожүйелерді қалпына келтіру және биоинженерия арқылы жағалауды нығайту."
         }
     };
 
@@ -480,31 +542,26 @@
         currentLang = lang;
         document.documentElement.lang = lang;
 
-        // Обновляем статические тексты
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (translations[lang][key]) {
-                el.textContent = translations[lang][key];
+                // Плавная смена текста
+                el.style.opacity = 0;
+                setTimeout(() => {
+                    el.textContent = translations[lang][key];
+                    el.style.opacity = 1;
+                }, 200);
             }
         });
 
-        // Обновляем плейсхолдеры
         document.getElementById('searchInput').placeholder = translations[lang].ph_search;
-
-        // Если открыт результат, обновляем динамические части (статусы, бейджи)
+        
         const resultBlock = document.getElementById('resultBlock');
         if (resultBlock.classList.contains('visible')) {
-             // Перезапускаем рендер последнего результата (упрощенно - просто обновим текст кнопки)
-             const btn = document.getElementById('searchBtn');
-             if(!btn.disabled) btn.textContent = translations[lang].btn_calculate;
-             
-             // В реальном приложении лучше хранить lastData и вызывать showResult(lastData) заново
-             // Здесь мы просто обновим видимые текстовые метки, если они есть в DOM
              updateDynamicText();
         }
     }
 
-    // Обработчики меню
     const settingsBtn = document.getElementById('settingsBtn');
     const langMenu = document.getElementById('langMenu');
     
@@ -528,19 +585,10 @@
     // ============================================
     // 1. ЗАГРУЗКА
     // ============================================
-    const bootLogs = [
-        "Подключение к глобальной сети...", // Fallback, будет перезаписано i18n
-        "Синхронизация моделей...",
-        "Калибровка прогнозов...",
-        "Система готова."
-    ];
-    
-    // Применяем язык сразу при старте
     setLanguage('ru'); 
-
     setTimeout(() => {
         document.getElementById('boot-screen').classList.add('hidden');
-    }, 2000);
+    }, 2200);
 
     // ============================================
     // 2. КАРТА
@@ -576,21 +624,24 @@
     // 4. АНИМАЦИИ
     // ============================================
     function smoothFadeText(element, finalText, duration = 500) {
-        element.style.transition = `opacity ${duration}ms ease`;
+        element.style.transition = `opacity ${duration}ms var(--ease-smooth), transform ${duration}ms var(--ease-smooth)`;
         element.style.opacity = 0;
+        element.style.transform = 'translateY(5px)';
         setTimeout(() => {
             element.innerText = finalText;
             element.style.opacity = 1;
-        }, 150);
+            element.style.transform = 'translateY(0)';
+        }, 200);
     }
 
-    function animateNumber(element, finalNum, duration = 1000, suffix = '') {
+    function animateNumber(element, finalNum, duration = 1200, suffix = '') {
         const start = 0;
         const range = finalNum - start;
         const startTime = performance.now();
         function update(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
+            // Плавная кривая easeOutCubic
             const ease = 1 - Math.pow(1 - progress, 3);
             const currentVal = (start + (range * ease)).toFixed(1);
             element.innerHTML = (finalNum > 0 ? '+' : '') + currentVal + suffix;
@@ -605,14 +656,14 @@
     // ============================================
     const adaptationPhrases = {
         agriculture: {
-            ru: ["Внедрение вертикальных ферм.", "Переход на засухоустойчивые культуры.", "Локальные агрокомплексы."],
-            en: ["Implementation of vertical farms.", "Shift to drought-resistant crops.", "Local agro-complexes."],
-            kz: ["Вертикальді фермаларды енгізу.", "Құрғақшылыққа төзімді дақылдар.", "Жергілікті агрокешендер."]
+            ru: ["Внедрение вертикальных ферм.", "Переход на засухоустойчивые культуры.", "Развитие локальных агрокомплексов."],
+            en: ["Implementation of vertical farms.", "Shift to drought-resistant crops.", "Development of local agro-complexes."],
+            kz: ["Вертикальді фермаларды енгізу.", "Құрғақшылыққа төзімді дақылдар.", "Жергілікті агрокешендерді дамыту."]
         },
         energy: {
-            ru: ["Переход на солнечную и ветровую энергию.", "Модернизация Smart Grid сетей.", "Геотермальные тепловые насосы."],
-            en: ["Transition to solar and wind energy.", "Smart Grid modernization.", "Geothermal heat pumps."],
-            kz: ["Күн және жел энергиясына көшу.", "Smart Grid желілерін жаңғырту.", "Геотермиялық сорғылар."]
+            ru: ["Переход на солнечную и ветровую энергию.", "Модернизация Smart Grid сетей.", "Использование геотермальных насосов."],
+            en: ["Transition to solar and wind energy.", "Smart Grid modernization.", "Use of geothermal heat pumps."],
+            kz: ["Күн және жел энергиясына көшу.", "Smart Grid желілерін жаңғырту.", "Геотермиялық сорғыларды пайдалану."]
         },
         water: {
             ru: ["Замкнутые циклы сбора воды.", "Биоинженерия берегов.", "Энергоэффективное опреснение."],
@@ -620,8 +671,8 @@
             kz: ["Суды жинаудың тұйық циклі.", "Жағалау биоинженериясы.", "Тиімді тұщыландыру."]
         },
         infrastructure: {
-            ru: ["Зеленые крыши и живые фасады.", "Светоотражающие покрытия.", "Развитие электротранспорта."],
-            en: ["Green roofs and living facades.", "Reflective coatings.", "Electric transport expansion."],
+            ru: ["Зеленые крыши и живые фасады.", "Светоотражающие покрытия.", "Развитие бесшовного электротранспорта."],
+            en: ["Green roofs and living facades.", "Reflective coatings.", "Seamless electric transport expansion."],
             kz: ["Жасыл шатырлар мен тірі фасадтар.", "Шағылыстыратын жабындар.", "Электр көлігін дамыту."]
         }
     };
@@ -630,18 +681,17 @@
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // Получаем фразу с учетом языка
     function getPhrase(category) {
         return getRandomElement(adaptationPhrases[category][currentLang] || adaptationPhrases[category]['en']);
     }
 
     const cityKnowledge = {
-        'москва': { temp: 2.8, water: 0.1, air: 'val_good', habit: 'val_fav', desc: { ru: 'Климат мягче, вегетационный период длиннее. Успешная адаптация.', en: 'Softer climate, longer growing season. Successful adaptation.', kz: 'Климат жұмсақ, өсу кезеңі ұзарды. Сәтті бейімделу.' } },
-        'st. petersburg': { temp: 3.1, water: 0.7, air: 'val_good', habit: 'val_stable', desc: { ru: 'Защитные сооружения модернизированы. Развитие зеленых зон.', en: 'Protective structures upgraded. Green zones developing.', kz: 'Қорғаныс құрылымдары жаңартылды. Жасыл аймақтар дамуда.' } },
-        'new york': { temp: 3.5, water: 1.2, air: 'val_avg', habit: 'val_adapt', desc: { ru: 'Защитные парковые зоны вдоль побережья. Возобновляемая энергия.', en: 'Protective park zones along the coast. Renewable energy.', kz: 'Жағалаудағы қорғаныс саябақтары. Жаңартылатын энергия.' } },
-        'tokyo': { temp: 3.8, water: 1.0, air: 'val_good', habit: 'val_tech', desc: { ru: 'Системы предупреждения. Пористые покрытия.', en: 'Warning systems. Porous coatings.', kz: 'Ескерту жүйелері. Кеуекті жабындар.' } },
-        'singapore': { temp: 3.4, water: 0.6, air: 'val_good', habit: 'val_tech', desc: { ru: 'Лидер умного города: вертикальные сады, NEWater.', en: 'Smart city leader: vertical gardens, NEWater.', kz: 'Ақылды қала көшбасшысы: тік бақтар, NEWater.' } },
-        'reykjavik': { temp: 2.1, water: 0.3, air: 'val_good', habit: 'val_fav', desc: { ru: 'Геотермальная энергия. Локальное тепличное хозяйство.', en: 'Geothermal energy. Local greenhouse farming.', kz: 'Геотермиялық энергия. Жергілікті жылыжай шаруашылығы.' } }
+        'москва': { temp: 2.8, water: 0.1, air: 'val_good', habit: 'val_fav', desc: { ru: 'Климат становится мягче, вегетационный период удлиняется. Успешная адаптация: внедрение новых культур и вертикальных ферм.', en: 'Climate is becoming milder, growing season is longer. Successful adaptation with vertical farms.', kz: 'Климат жұмсақ, өсу кезеңі ұзарды. Вертикальді фермалар арқылы сәтті бейімделу.' } },
+        'st. petersburg': { temp: 3.1, water: 0.7, air: 'val_good', habit: 'val_stable', desc: { ru: 'Комплекс защитных сооружений модернизирован. Активное развитие зеленых зон и систем сбора дождевой воды.', en: 'Protective structures upgraded. Active development of green zones and rainwater collection.', kz: 'Қорғаныс құрылымдары жаңартылды. Жасыл аймақтар мен жаңбыр суын жинау жүйесі дамуда.' } },
+        'new york': { temp: 3.5, water: 1.2, air: 'val_avg', habit: 'val_adapt', desc: { ru: 'Реализация проекта защитных парковых зон вдоль побережья. Массовый переход на возобновляемые источники энергии.', en: 'Protective park zones along the coast. Mass transition to renewable energy sources.', kz: 'Жағалаудағы қорғаныс саябақтары. Жаңартылатын энергия көздеріне жаппай көшу.' } },
+        'tokyo': { temp: 3.8, water: 1.0, air: 'val_good', habit: 'val_tech', desc: { ru: 'Передовые системы раннего предупреждения. Активное использование пористых покрытий для предотвращения затоплений.', en: 'Advanced early warning systems. Active use of porous coatings to prevent flooding.', kz: 'Озық ескерту жүйелері. Тасқынның алдын алу үшін кеуекті жабындарды белсенді қолдану.' } },
+        'singapore': { temp: 3.4, water: 0.6, air: 'val_good', habit: 'val_tech', desc: { ru: 'Мировой лидер "умного" города: вертикальные сады, системы очистки воды NEWater, энергетическая независимость.', en: 'Global smart city leader: vertical gardens, NEWater purification, energy independence.', kz: 'Әлемдік "ақылды қала" көшбасшысы: тік бақтар, NEWater тазарту жүйесі, энергетикалық тәуелсіздік.' } },
+        'reykjavik': { temp: 2.1, water: 0.3, air: 'val_good', habit: 'val_fav', desc: { ru: 'Полный переход на геотермальную и гидроэнергетику. Увеличение вегетационного периода позволяет развивать локальное тепличное хозяйство.', en: 'Full transition to geothermal and hydro power. Longer growing season enables local greenhouse farming.', kz: 'Геотермиялық және гидроэнергетикаға толық көшу. Өсу кезеңінің ұзаруы жергілікті жылыжай шаруашылығын дамытуға мүмкіндік береді.' } }
     };
 
     function pseudoRandom(lat, lon) {
@@ -709,17 +759,15 @@
     // ============================================
     // 6. ОТОБРАЖЕНИЕ
     // ============================================
-    let lastResultData = null; // Для обновления при смене языка
+    let lastResultData = null;
 
     function updateDynamicText() {
         if (!lastResultData) return;
         const t = translations[currentLang];
         
-        // Обновляем значения, которые зависят от языка (словарные)
-        document.getElementById('airValue').textContent = t[lastResultData.air] || lastResultData.air;
-        document.getElementById('habitableValue').textContent = t[lastResultData.habit] || lastResultData.habit;
+        smoothFadeText(document.getElementById('airValue'), t[lastResultData.air] || lastResultData.air, 300);
+        smoothFadeText(document.getElementById('habitableValue'), t[lastResultData.habit] || lastResultData.habit, 300);
 
-        // Бейдж
         const badge = document.getElementById('statusBadge');
         if (lastResultData.habit === 'val_trans' || lastResultData.habit === 'val_adapt') {
             badge.className = 'badge-status badge-attention';
@@ -734,7 +782,7 @@
         if (isMinimized) togglePanel();
 
         const data = getClimateForecast(lat, lon, placeName);
-        lastResultData = data; // Сохраняем для смены языка
+        lastResultData = data;
         
         requestCount++;
         const t = translations[currentLang];
@@ -765,7 +813,7 @@
             const waterCard = document.getElementById('cardWater');
             waterCard.className = `stat-card ${data.water > 1.5 ? 'attention' : ''}`;
 
-            updateDynamicText(); // Установка бейджа и текста
+            updateDynamicText();
 
             smoothFadeText(document.getElementById('descriptionText'), data.desc, 600);
             resultBlock.classList.add('visible');
@@ -782,7 +830,7 @@
             const chip = document.createElement('span');
             chip.className = 'chip';
             chip.textContent = place;
-            chip.style.animation = `panelSlide 0.4s ease backwards ${index * 0.05}s`;
+            chip.style.animation = `panelSlide 0.5s var(--ease-spring) backwards ${index * 0.08}s`;
             chip.onclick = () => {
                 document.getElementById('searchInput').value = place;
                 performSearch(place);
@@ -798,11 +846,11 @@
         if (currentMarker) map.removeLayer(currentMarker);
         const icon = L.divIcon({
             className: 'click-marker',
-            html: '<div class="marker-ripple"></div><div class="marker-core"></div>',
+            html: '<div class="marker-ripple"></div><div class="marker-ripple"></div><div class="marker-ripple"></div><div class="marker-core"></div>',
             iconSize: [40, 40], iconAnchor: [20, 20]
         });
         currentMarker = L.marker([lat, lon], { icon }).addTo(map);
-        map.flyTo([lat, lon], Math.max(8, map.getZoom()), { duration: 1.8, easeLinearity: 0.5 });
+        map.flyTo([lat, lon], Math.max(8, map.getZoom()), { duration: 2.0, easeLinearity: 0.5 });
         showResult(label, lat, lon);
     }
 
@@ -810,7 +858,7 @@
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
         document.getElementById('searchBtn').disabled = true;
-        document.getElementById('searchBtn').textContent = 'LOADING...'; // Быстрый фидбек
+        document.getElementById('searchBtn').textContent = '...';
 
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=${currentLang === 'kz' ? 'kk' : currentLang}`)
             .then(res => res.json())
@@ -832,7 +880,7 @@
 
         const t = translations[currentLang];
         document.getElementById('searchBtn').disabled = true;
-        document.getElementById('searchBtn').textContent = 'LOADING...';
+        document.getElementById('searchBtn').textContent = '...';
         document.getElementById('resultBlock').classList.remove('visible');
 
         clearTimeout(searchTimeout);
