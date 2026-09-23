@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🌍 NEURO-MAP 2055 | Эко-прогнозирование</title>
+    <title>🌍 NEURO-MAP 2055 | Eco-Forecasting</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,10 +12,10 @@
 
     <style>
         :root {
-            --eco-cyan: #2dd4bf;       /* Спокойный бирюзовый */
-            --eco-green: #34d399;      /* Мягкий изумрудный */
-            --eco-warm: #fbbf24;       /* Теплый янтарный (вместо тревожного оранжевого) */
-            --bg-dark: #0f172a;        /* Глубокий спокойный синий */
+            --eco-cyan: #2dd4bf;
+            --eco-green: #34d399;
+            --eco-warm: #fbbf24;
+            --bg-dark: #0f172a;
             --panel-bg: rgba(15, 23, 42, 0.85);
             --border-glow: rgba(45, 212, 191, 0.25);
             --text-primary: #f1f5f9;
@@ -33,117 +33,66 @@
             touch-action: none;
         }
 
-        /* ===== ЭКРАН ЗАГРУЗКИ ===== */
+        /* ===== ЗАГРУЗКА ===== */
         #boot-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-dark);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 1s ease, visibility 1s;
         }
         #boot-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .boot-text {
             font-family: 'JetBrains Mono', monospace;
-            color: var(--eco-cyan);
-            font-size: 13px;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
+            color: var(--eco-cyan); font-size: 13px; margin-bottom: 20px; letter-spacing: 1px;
         }
         .boot-bar {
-            width: 280px;
-            height: 2px;
-            background: rgba(45, 212, 191, 0.15);
-            position: relative;
-            overflow: hidden;
-            border-radius: 2px;
+            width: 280px; height: 2px; background: rgba(45, 212, 191, 0.15);
+            position: relative; overflow: hidden; border-radius: 2px;
         }
         .boot-bar::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; height: 100%; width: 0%;
-            background: var(--eco-green);
-            box-shadow: 0 0 15px var(--eco-green);
+            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+            background: var(--eco-green); box-shadow: 0 0 15px var(--eco-green);
             animation: bootLoad 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         @keyframes bootLoad { to { width: 100%; } }
 
-        /* ===== ФОНОВЫЕ ЭФФЕКТЫ ===== */
+        /* ===== ФОН И КАРТА ===== */
         body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
                 linear-gradient(rgba(45, 212, 191, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(45, 212, 191, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-            z-index: 0;
+            background-size: 60px 60px; pointer-events: none; z-index: 0;
         }
-
         .vignette {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle, transparent 50%, rgba(15, 23, 42, 0.8) 100%);
-            pointer-events: none;
-            z-index: 998;
+            pointer-events: none; z-index: 998;
         }
-
-        /* ===== КАРТА ===== */
-        #map {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1;
-            background: #0f172a;
-        }
+        #map { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #0f172a; }
+        .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.9); }
         
-        .leaflet-tile-pane {
-            filter: invert(100%) hue-rotate(180deg) brightness(0.85) contrast(1.05) saturate(0.9);
-        }
-
         .leaflet-control-zoom {
             border: 1px solid var(--border-glow) !important;
             background: rgba(15, 23, 42, 0.9) !important;
-            backdrop-filter: blur(10px);
-            border-radius: 12px !important;
-            overflow: hidden;
+            backdrop-filter: blur(10px); border-radius: 12px !important; overflow: hidden;
         }
         .leaflet-control-zoom a {
-            color: var(--eco-cyan) !important;
-            border-bottom: 1px solid rgba(45, 212, 191, 0.15) !important;
+            color: var(--eco-cyan) !important; border-bottom: 1px solid rgba(45, 212, 191, 0.15) !important;
             transition: all 0.3s;
         }
-        .leaflet-control-zoom a:hover {
-            background: var(--eco-cyan) !important;
-            color: #0f172a !important;
-        }
+        .leaflet-control-zoom a:hover { background: var(--eco-cyan) !important; color: #0f172a !important; }
 
-        /* ===== СПОКОЙНЫЙ МАРКЕР (БЕЗ РАДАРА) ===== */
-        .click-marker {
-            position: relative;
-            width: 40px; height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* ===== МАРКЕР ===== */
+        .click-marker { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .marker-core {
-            width: 14px; height: 14px;
-            background: var(--eco-green);
-            border-radius: 50%;
-            border: 2px solid #fff;
-            box-shadow: 0 0 15px rgba(52, 211, 153, 0.5);
-            z-index: 2;
+            width: 14px; height: 14px; background: var(--eco-green); border-radius: 50%;
+            border: 2px solid #fff; box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); z-index: 2;
             animation: softPulse 3s ease-in-out infinite;
         }
         .marker-ripple {
-            position: absolute;
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            border: 1px solid rgba(52, 211, 153, 0.4);
-            animation: waterRipple 3s ease-out infinite;
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            border: 1px solid rgba(52, 211, 153, 0.4); animation: waterRipple 3s ease-out infinite;
         }
         @keyframes softPulse { 
             0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); } 
@@ -156,311 +105,179 @@
 
         /* ===== ПАНЕЛЬ ===== */
         .panel {
-            position: fixed;
-            top: 24px; right: 24px;
-            width: 400px;
+            position: fixed; top: 24px; right: 24px; width: 400px;
             max-height: calc(100vh - 48px);
-            background: var(--panel-bg);
-            backdrop-filter: blur(40px) saturate(1.2);
+            background: var(--panel-bg); backdrop-filter: blur(40px) saturate(1.2);
             -webkit-backdrop-filter: blur(40px) saturate(1.2);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 100;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glow); border-radius: 20px; padding: 24px;
+            display: flex; flex-direction: column; gap: 16px; overflow-y: auto; overflow-x: hidden;
+            z-index: 100; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
             animation: panelSlide 0.8s cubic-bezier(0.16, 1, 0.3, 1);
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes panelSlide {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes panelSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .panel.minimized {
-            max-height: 68px !important;
-            padding-top: 16px;
-            padding-bottom: 16px;
-            cursor: pointer;
-            overflow: hidden !important;
-        }
-        .panel.minimized .search-box,
-        .panel.minimized .chips,
-        .panel.minimized #resultBlock {
-            display: none !important;
-        }
+        .panel.minimized { max-height: 68px !important; padding-top: 16px; padding-bottom: 16px; cursor: pointer; overflow: hidden !important; }
+        .panel.minimized .search-box, .panel.minimized .chips, .panel.minimized #resultBlock { display: none !important; }
 
         .panel::-webkit-scrollbar { width: 4px; }
         .panel::-webkit-scrollbar-track { background: transparent; }
-        .panel::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--eco-cyan), var(--eco-green));
-            border-radius: 10px;
-        }
+        .panel::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--eco-cyan), var(--eco-green)); border-radius: 10px; }
 
         /* ===== ЗАГОЛОВОК ===== */
-        .panel-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            flex-shrink: 0;
-        }
+        .panel-header { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); flex-shrink: 0; }
         .panel.minimized .panel-header { padding-bottom: 0; border-bottom: none; justify-content: space-between; }
-        
-        .panel-header .icon {
-            font-size: 24px;
-            filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.4));
-        }
-
+        .panel-header .icon { font-size: 24px; filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.4)); }
         .panel-header h1 {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 22px;
-            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700;
             background: linear-gradient(90deg, var(--eco-cyan), #fff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 0.5px;
-            line-height: 1.1;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px; line-height: 1.1;
         }
-
         .sub {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--eco-green);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-top: 4px;
-            opacity: 0.8;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--eco-green);
+            letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.8;
         }
         .panel.minimized .sub { display: none; }
-
         .toggle-btn {
-            background: rgba(45, 212, 191, 0.08);
-            border: 1px solid rgba(45, 212, 191, 0.3);
-            color: var(--eco-cyan);
-            width: 30px; height: 30px;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-left: auto;
-            font-size: 12px;
-            flex-shrink: 0;
+            background: rgba(45, 212, 191, 0.08); border: 1px solid rgba(45, 212, 191, 0.3);
+            color: var(--eco-cyan); width: 30px; height: 30px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.3s ease; margin-left: auto; font-size: 12px; flex-shrink: 0;
         }
-        .toggle-btn:hover {
-            background: var(--eco-cyan);
-            color: #0f172a;
-        }
+        .toggle-btn:hover { background: var(--eco-cyan); color: #0f172a; }
         .panel.minimized .toggle-btn { transform: rotate(180deg); }
 
         /* ===== ПОИСК ===== */
-        .search-box {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
+        .search-box { display: flex; gap: 8px; flex-shrink: 0; }
         .search-box input {
-            flex: 1;
-            padding: 12px 16px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            outline: none;
-            transition: all 0.3s ease;
+            flex: 1; padding: 12px 16px; background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; color: white;
+            font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: all 0.3s ease;
         }
-        .search-box input:focus {
-            border-color: var(--eco-cyan);
-            background: rgba(0, 0, 0, 0.3);
-        }
+        .search-box input:focus { border-color: var(--eco-cyan); background: rgba(0, 0, 0, 0.3); }
         .search-box input::placeholder { color: #64748b; }
-
         .search-box button {
-            padding: 12px 18px;
-            background: rgba(45, 212, 191, 0.1);
-            border: 1px solid var(--eco-cyan);
-            border-radius: 12px;
-            color: var(--eco-cyan);
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            padding: 12px 18px; background: rgba(45, 212, 191, 0.1); border: 1px solid var(--eco-cyan);
+            border-radius: 12px; color: var(--eco-cyan); font-family: 'Rajdhani', sans-serif;
+            font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s ease;
+            text-transform: uppercase; letter-spacing: 1px;
         }
-        .search-box button:hover {
-            background: var(--eco-cyan);
-            color: #0f172a;
-        }
+        .search-box button:hover { background: var(--eco-cyan); color: #0f172a; }
         .search-box button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* ===== ЧИПЫ ===== */
-        .chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            flex-shrink: 0;
-        }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
         .chip {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 11px;
-            color: var(--text-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.03); padding: 6px 12px; border-radius: 16px;
+            font-size: 11px; color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer; transition: all 0.3s ease; font-family: 'JetBrains Mono', monospace;
         }
-        .chip:hover {
-            background: rgba(52, 211, 153, 0.1);
-            color: var(--eco-green);
-            border-color: rgba(52, 211, 153, 0.3);
-        }
+        .chip:hover { background: rgba(52, 211, 153, 0.1); color: var(--eco-green); border-color: rgba(52, 211, 153, 0.3); }
 
         /* ===== РЕЗУЛЬТАТ ===== */
         #resultBlock {
-            background: rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            display: none;
-            flex-direction: column;
-            gap: 16px;
-            flex-shrink: 0;
+            background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 20px; display: none; flex-direction: column;
+            gap: 16px; flex-shrink: 0;
         }
-        #resultBlock.visible { 
-            display: flex; 
-            animation: fadeIn 0.6s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        #resultBlock.visible { display: flex; animation: fadeIn 0.6s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .city-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        #cityName {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 26px;
-            font-weight: 700;
-            color: white;
-            line-height: 1.1;
-        }
+        #cityName { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; color: white; line-height: 1.1; }
         #cityCoords {
-            font-size: 11px;
-            color: var(--eco-cyan);
-            font-family: 'JetBrains Mono', monospace;
-            margin-top: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 11px; color: var(--eco-cyan); font-family: 'JetBrains Mono', monospace;
+            margin-top: 6px; display: flex; align-items: center; gap: 8px;
         }
         .live-indicator {
-            width: 6px; height: 6px;
-            background: var(--eco-green);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--eco-green);
-            animation: blink 3s infinite;
+            width: 6px; height: 6px; background: var(--eco-green); border-radius: 50%;
+            box-shadow: 0 0 8px var(--eco-green); animation: blink 3s infinite;
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-        /* ===== СЕТКА СТАТИСТИКИ ===== */
         .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-card {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04); transition: all 0.3s ease; position: relative;
         }
         .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 3px; height: 100%;
-            background: var(--eco-cyan);
-            border-radius: 12px 0 0 12px;
+            content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--eco-cyan); border-radius: 12px 0 0 12px;
         }
         .stat-card.attention::before { background: var(--eco-warm); }
-        
         .stat-card .label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 500;
-            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-secondary); text-transform: uppercase;
+            letter-spacing: 1px; font-weight: 500; font-family: 'JetBrains Mono', monospace;
         }
         .stat-card .value {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 24px;
-            font-weight: 700;
-            margin-top: 4px;
-            color: white;
+            font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700;
+            margin-top: 4px; color: white;
         }
         .value.attention { color: var(--eco-warm); }
         .value.good { color: var(--eco-green); }
 
-        /* ===== СТАТУС И ОПИСАНИЕ ===== */
         .badge-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px;
-            border-radius: 10px;
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 600;
-            font-size: 12px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            border: 1px solid transparent;
+            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px;
+            border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+            font-size: 12px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid transparent;
         }
         .badge-attention { background: rgba(251, 191, 36, 0.08); color: var(--eco-warm); border-color: rgba(251, 191, 36, 0.2); }
         .badge-good { background: rgba(52, 211, 153, 0.08); color: var(--eco-green); border-color: rgba(52, 211, 153, 0.2); }
 
         #descriptionText {
-            font-size: 13px;
-            line-height: 1.7;
-            color: #cbd5e1;
-            background: rgba(255, 255, 255, 0.02);
-            padding: 16px;
-            border-radius: 12px;
-            border-left: 2px solid var(--eco-green);
-            font-family: 'Inter', sans-serif;
-            transition: opacity 0.4s ease;
+            font-size: 13px; line-height: 1.7; color: #cbd5e1; background: rgba(255, 255, 255, 0.02);
+            padding: 16px; border-radius: 12px; border-left: 2px solid var(--eco-green);
+            font-family: 'Inter', sans-serif; transition: opacity 0.4s ease;
         }
 
         .stats-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 10px;
-            color: #64748b;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
-            flex-shrink: 0;
-            font-family: 'JetBrains Mono', monospace;
+            display: flex; justify-content: space-between; align-items: center; font-size: 10px;
+            color: #64748b; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.04);
+            flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
         }
+
+        /* ===== КНОПКА НАСТРОЕК ===== */
+        .settings-container {
+            position: fixed; top: 24px; left: 24px; z-index: 100;
+        }
+        .settings-btn {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glow); color: var(--eco-cyan);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .settings-btn:hover { background: var(--eco-cyan); color: #0f172a; transform: rotate(90deg); }
+        .settings-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+        .lang-menu {
+            position: absolute; top: 58px; left: 0;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glow); border-radius: 12px;
+            padding: 8px; display: flex; flex-direction: column; gap: 4px;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 120px;
+        }
+        .lang-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
+        .lang-option {
+            padding: 8px 12px; border-radius: 8px; color: var(--text-secondary);
+            cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+        }
+        .lang-option:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .lang-option.selected { background: rgba(45, 212, 191, 0.15); color: var(--eco-cyan); font-weight: bold; }
 
         /* ===== АДАПТИВ ===== */
         @media (max-width: 800px) {
             .panel {
-                top: auto; bottom: 0; right: 0; left: 0;
-                width: 100%;
-                max-height: 60vh;
-                border-radius: 20px 20px 0 0;
-                border-left: none; border-right: none; border-bottom: none;
-                padding: 20px;
+                top: auto; bottom: 0; right: 0; left: 0; width: 100%;
+                max-height: 60vh; border-radius: 20px 20px 0 0;
+                border-left: none; border-right: none; border-bottom: none; padding: 20px;
             }
             .panel.minimized { max-height: 68px !important; border-radius: 20px 20px 0 0; }
+            .settings-container { top: 16px; left: 16px; }
         }
         @media (max-width: 400px) {
             .grid-2col { grid-template-columns: 1fr; }
@@ -473,13 +290,25 @@
 
 <!-- ЭКРАН ЗАГРУЗКИ -->
 <div id="boot-screen">
-    <div class="boot-text">ИНИЦИАЛИЗАЦИЯ ЭКО-МОДЕЛЕЙ 2055</div>
-    <div class="boot-text" id="boot-log" style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; font-weight: 400;">Загрузка данных устойчивого развития...</div>
+    <div class="boot-text" data-i18n="boot_title">INITIALIZING ECO-MODELS 2055</div>
+    <div class="boot-text" id="boot-log" style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; font-weight: 400;" data-i18n="boot_loading">Loading sustainable development data...</div>
     <div class="boot-bar"></div>
 </div>
 
 <div class="vignette"></div>
 <div id="map"></div>
+
+<!-- КНОПКА НАСТРОЕК -->
+<div class="settings-container">
+    <button class="settings-btn" id="settingsBtn">
+        <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+    </button>
+    <div class="lang-menu" id="langMenu">
+        <div class="lang-option selected" data-lang="ru">🇷🇺 Русский</div>
+        <div class="lang-option" data-lang="en">🇬🇧 English</div>
+        <div class="lang-option" data-lang="kz">🇰🇿 Қазақша</div>
+    </div>
+</div>
 
 <!-- ПАНЕЛЬ -->
 <div class="panel" id="mainPanel">
@@ -487,22 +316,22 @@
         <span class="icon">🌱</span>
         <div style="flex: 1;">
             <h1>NEURO-MAP 2055</h1>
-            <div class="sub">Прогнозирование и адаптация</div>
+            <div class="sub" data-i18n="subtitle">Forecasting & Adaptation</div>
         </div>
-        <button class="toggle-btn" id="toggleBtn" title="Свернуть/Развернуть">▼</button>
+        <button class="toggle-btn" id="toggleBtn" title="Toggle">▼</button>
     </div>
 
     <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Город или координаты..." autocomplete="off">
-        <button id="searchBtn">РАССЧИТАТЬ</button>
+        <input type="text" id="searchInput" placeholder="City or coordinates..." autocomplete="off">
+        <button id="searchBtn" data-i18n="btn_calculate">CALCULATE</button>
     </div>
 
     <div class="chips" id="exampleChips">
-        <span class="chip" data-place="Москва">Москва</span>
-        <span class="chip" data-place="Санкт-Петербург">Санкт-Петербург</span>
-        <span class="chip" data-place="Сингапур">Сингапур</span>
-        <span class="chip" data-place="Токио">Токио</span>
-        <span class="chip" data-place="Рейкьявик">Рейкьявик</span>
+        <span class="chip" data-place="Moscow">Moscow</span>
+        <span class="chip" data-place="St. Petersburg">St. Petersburg</span>
+        <span class="chip" data-place="Singapore">Singapore</span>
+        <span class="chip" data-place="Tokyo">Tokyo</span>
+        <span class="chip" data-place="Reykjavik">Reykjavik</span>
     </div>
 
     <div id="resultBlock">
@@ -515,32 +344,30 @@
 
         <div class="grid-2col">
             <div class="stat-card" id="cardTemp">
-                <div class="label">Изменение темп.</div>
+                <div class="label" data-i18n="lbl_temp">Temp Change</div>
                 <div class="value" id="tempValue">—</div>
             </div>
             <div class="stat-card" id="cardWater">
-                <div class="label">Уровень моря</div>
+                <div class="label" data-i18n="lbl_sea">Sea Level</div>
                 <div class="value" id="waterValue">—</div>
             </div>
             <div class="stat-card" id="cardAir">
-                <div class="label">Качество воздуха</div>
+                <div class="label" data-i18n="lbl_air">Air Quality</div>
                 <div class="value" id="airValue">—</div>
             </div>
             <div class="stat-card" id="cardHabit">
-                <div class="label">Статус региона</div>
+                <div class="label" data-i18n="lbl_status">Region Status</div>
                 <div class="value" id="habitableValue">—</div>
             </div>
         </div>
 
-        <div id="statusBadge" class="badge-status">ОЖИДАНИЕ ДАННЫХ</div>
+        <div id="statusBadge" class="badge-status" data-i18n="status_waiting">AWAITING DATA</div>
         
-        <div id="descriptionText">
-            Выберите точку на карте или введите название города для получения отчета о климатической адаптации и устойчивом развитии региона к 2055 году.
-        </div>
+        <div id="descriptionText" data-i18n="desc_intro">Select a point on the map or enter a city name to receive a climate adaptation report for 2055.</div>
 
         <div class="stats-footer">
-            <span id="clickCounter">ЗАПРОСОВ: 0</span>
-            <span>ЭКО-МОДЕЛИРОВАНИЕ AI v4.2</span>
+            <span id="clickCounter" data-i18n="lbl_requests">REQUESTS: 0</span>
+            <span>ECO-MODELING AI v4.2</span>
         </div>
     </div>
 </div>
@@ -549,44 +376,181 @@
 
 <script>
     // ============================================
-    // 0. ЗАГРУЗКА
+    // 0. ЛОКАЛИЗАЦИЯ (i18n)
+    // ============================================
+    const translations = {
+        ru: {
+            boot_title: "ИНИЦИАЛИЗАЦИЯ ЭКО-МОДЕЛЕЙ 2055",
+            boot_loading: "Загрузка данных устойчивого развития...",
+            subtitle: "Прогнозирование и адаптация",
+            btn_calculate: "РАССЧИТАТЬ",
+            lbl_temp: "Изменение темп.",
+            lbl_sea: "Уровень моря",
+            lbl_air: "Качество воздуха",
+            lbl_status: "Статус региона",
+            status_waiting: "ОЖИДАНИЕ ДАННЫХ",
+            desc_intro: "Выберите точку на карте или введите название города для получения отчета о климатической адаптации и устойчивом развитии региона к 2055 году.",
+            lbl_requests: "ЗАПРОСОВ:",
+            ph_search: "Город или координаты...",
+            
+            // Значения статусов
+            val_good: "Хорошее",
+            val_avg: "Среднее",
+            val_stable: "Стабильно",
+            val_adapt: "Адаптируется",
+            val_trans: "Трансформируется",
+            val_fav: "Благоприятно",
+            val_tech: "Высокотехнологично",
+            badge_ok: "✅ УСТОЙЧИВОЕ РАЗВИТИЕ",
+            badge_warn: "⚠️ ТРЕБУЕТСЯ АКТИВНАЯ АДАПТАЦИЯ",
+            
+            // Генератор текста
+            gen_arctic: "Арктический регион: фокус на новых инженерных решениях для стабилизации грунтов.",
+            gen_tropical: "Тропический пояс: фокус на защите от экстремальной жары и сохранении водных ресурсов.",
+            gen_temperate: "Умеренный пояс: климат становится более переменчивым, но успешно управляется.",
+            gen_coastal_prefix: "Прибрежная зона:",
+            gen_coastal_suffix: "Укрепление береговой линии с помощью восстановления естественных экосистем."
+        },
+        en: {
+            boot_title: "INITIALIZING ECO-MODELS 2055",
+            boot_loading: "Loading sustainable development data...",
+            subtitle: "Forecasting & Adaptation",
+            btn_calculate: "CALCULATE",
+            lbl_temp: "Temp Change",
+            lbl_sea: "Sea Level",
+            lbl_air: "Air Quality",
+            lbl_status: "Region Status",
+            status_waiting: "AWAITING DATA",
+            desc_intro: "Select a point on the map or enter a city name to receive a climate adaptation report for 2055.",
+            lbl_requests: "REQUESTS:",
+            ph_search: "City or coordinates...",
+            
+            val_good: "Good",
+            val_avg: "Average",
+            val_stable: "Stable",
+            val_adapt: "Adapting",
+            val_trans: "Transforming",
+            val_fav: "Favorable",
+            val_tech: "High-Tech",
+            badge_ok: "✅ SUSTAINABLE DEVELOPMENT",
+            badge_warn: "⚠️ ACTIVE ADAPTATION REQUIRED",
+            
+            gen_arctic: "Arctic region: focus on new engineering solutions for soil stabilization.",
+            gen_tropical: "Tropical zone: focus on protection from extreme heat and water conservation.",
+            gen_temperate: "Temperate zone: climate is becoming more variable but successfully managed.",
+            gen_coastal_prefix: "Coastal zone:",
+            gen_coastal_suffix: "Shoreline reinforcement through restoration of natural ecosystems."
+        },
+        kz: {
+            boot_title: "ЭКО-МОДЕЛЬДЕР 2055 ИНИЦИАЛИЗАЦИЯСЫ",
+            boot_loading: "Тұрақты даму деректерін жүктеу...",
+            subtitle: "Болжау және бейімделу",
+            btn_calculate: "ЕСЕПТЕУ",
+            lbl_temp: "Темп. өзгерісі",
+            lbl_sea: "Теңіз деңгейі",
+            lbl_air: "Ауа сапасы",
+            lbl_status: "Аймақ мәртебесі",
+            status_waiting: "ДЕРЕКТЕРДІ КҮТУ",
+            desc_intro: "2055 жылға қарай климаттық бейімделу туралы есеп алу үшін картадан нүктені таңдаңыз немесе қала атауын енгізіңіз.",
+            lbl_requests: "СҰРАНЫС:",
+            ph_search: "Қала немесе координаттар...",
+            
+            val_good: "Жақсы",
+            val_avg: "Орташа",
+            val_stable: "Тұрақты",
+            val_adapt: "Бейімделуде",
+            val_trans: "Трансформация",
+            val_fav: "Қолайлы",
+            val_tech: "Жоғары тех.",
+            badge_ok: "✅ ТҰРАҚТЫ ДАМУ",
+            badge_warn: "⚠️ БЕЙІМДЕЛУ ҚАЖЕТ",
+            
+            gen_arctic: "Арктикалық аймақ: топырақты тұрақтандыру үшін жаңа инженерлік шешімдерге назар аударылуда.",
+            gen_tropical: "Тропиктік белдеу: шұғыл ыстықтан қорғау және су ресурстарын сақтау маңызды.",
+            gen_temperate: "Қоңыржай белдеу: климат құбылмалы болып келеді, бірақ сәтті басқарылуда.",
+            gen_coastal_prefix: "Жағалау аймағы:",
+            gen_coastal_suffix: "Табиғи экожүйелерді қалпына келтіру арқылы жағалауды нығайту."
+        }
+    };
+
+    let currentLang = 'ru';
+
+    function setLanguage(lang) {
+        if (!translations[lang]) return;
+        currentLang = lang;
+        document.documentElement.lang = lang;
+
+        // Обновляем статические тексты
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[lang][key]) {
+                el.textContent = translations[lang][key];
+            }
+        });
+
+        // Обновляем плейсхолдеры
+        document.getElementById('searchInput').placeholder = translations[lang].ph_search;
+
+        // Если открыт результат, обновляем динамические части (статусы, бейджи)
+        const resultBlock = document.getElementById('resultBlock');
+        if (resultBlock.classList.contains('visible')) {
+             // Перезапускаем рендер последнего результата (упрощенно - просто обновим текст кнопки)
+             const btn = document.getElementById('searchBtn');
+             if(!btn.disabled) btn.textContent = translations[lang].btn_calculate;
+             
+             // В реальном приложении лучше хранить lastData и вызывать showResult(lastData) заново
+             // Здесь мы просто обновим видимые текстовые метки, если они есть в DOM
+             updateDynamicText();
+        }
+    }
+
+    // Обработчики меню
+    const settingsBtn = document.getElementById('settingsBtn');
+    const langMenu = document.getElementById('langMenu');
+    
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        langMenu.classList.toggle('active');
+    });
+
+    document.addEventListener('click', () => {
+        langMenu.classList.remove('active');
+    });
+
+    document.querySelectorAll('.lang-option').forEach(opt => {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            setLanguage(this.dataset.lang);
+        });
+    });
+
+    // ============================================
+    // 1. ЗАГРУЗКА
     // ============================================
     const bootLogs = [
-        "Подключение к глобальной сети экологического мониторинга...",
-        "Синхронизация с моделями устойчивого развития...",
-        "Калибровка климатических прогнозов...",
-        "Система готова. Будущее строится сегодня."
+        "Подключение к глобальной сети...", // Fallback, будет перезаписано i18n
+        "Синхронизация моделей...",
+        "Калибровка прогнозов...",
+        "Система готова."
     ];
-    let logIndex = 0;
-    const bootLogEl = document.getElementById('boot-log');
-    const bootInterval = setInterval(() => {
-        if (logIndex < bootLogs.length) {
-            bootLogEl.textContent = bootLogs[logIndex];
-            logIndex++;
-        }
-    }, 400);
+    
+    // Применяем язык сразу при старте
+    setLanguage('ru'); 
 
     setTimeout(() => {
-        clearInterval(bootInterval);
         document.getElementById('boot-screen').classList.add('hidden');
     }, 2000);
 
     // ============================================
-    // 1. КАРТА
+    // 2. КАРТА
     // ============================================
     const map = L.map('map', {
-        center: [45, 40],
-        zoom: 3,
-        zoomControl: false,
-        worldCopyJump: true,
-        attributionControl: true
+        center: [45, 40], zoom: 3, zoomControl: false, worldCopyJump: true, attributionControl: true
     });
-
     L.control.zoom({ position: 'bottomright' }).addTo(map);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 19
+        attribution: '&copy; OpenStreetMap', maxZoom: 19
     }).addTo(map);
 
     let currentMarker = null;
@@ -595,7 +559,7 @@
     let isMinimized = false;
 
     // ============================================
-    // 2. УПРАВЛЕНИЕ ПАНЕЛЬЮ
+    // 3. УПРАВЛЕНИЕ ПАНЕЛЬЮ
     // ============================================
     const mainPanel = document.getElementById('mainPanel');
     const toggleBtn = document.getElementById('toggleBtn');
@@ -605,18 +569,11 @@
         isMinimized = !isMinimized;
         mainPanel.classList.toggle('minimized', isMinimized);
     }
-
-    toggleBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        togglePanel();
-    });
-
-    panelHeader.addEventListener('click', () => {
-        if (isMinimized) togglePanel();
-    });
+    toggleBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePanel(); });
+    panelHeader.addEventListener('click', () => { if (isMinimized) togglePanel(); });
 
     // ============================================
-    // 3. ПЛАВНАЯ АНИМАЦИЯ ТЕКСТА (БЕЗ ГЛИТЧЕЙ)
+    // 4. АНИМАЦИИ
     // ============================================
     function smoothFadeText(element, finalText, duration = 500) {
         element.style.transition = `opacity ${duration}ms ease`;
@@ -631,72 +588,60 @@
         const start = 0;
         const range = finalNum - start;
         const startTime = performance.now();
-        
         function update(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
-            
+            const ease = 1 - Math.pow(1 - progress, 3);
             const currentVal = (start + (range * ease)).toFixed(1);
             element.innerHTML = (finalNum > 0 ? '+' : '') + currentVal + suffix;
-
-            if (progress < 1) {
-                requestAnimationFrame(update);
-            } else {
-                element.innerHTML = (finalNum > 0 ? '+' : '') + finalNum + suffix;
-            }
+            if (progress < 1) requestAnimationFrame(update);
+            else element.innerHTML = (finalNum > 0 ? '+' : '') + finalNum + suffix;
         }
         requestAnimationFrame(update);
     }
 
     // ============================================
-    // 4. БАЗА ЗНАНИЙ (ЭКО-ФОКУС)
+    // 5. БАЗА ЗНАНИЙ И ГЕНЕРАТОР
     // ============================================
     const adaptationPhrases = {
-        agriculture: [
-            "Активное внедрение вертикальных ферм и гидропонных систем в городской черте.",
-            "Переход на засухоустойчивые сорта сельскохозяйственных культур.",
-            "Развитие локальных агрокомплексов для снижения логистического углеродного следа.",
-            "Использование прецизионного земледелия с поддержкой ИИ для оптимизации ресурсов."
-        ],
-        energy: [
-            "Массовый переход на солнечную и ветровую энергетику с твердотельными накопителями.",
-            "Модернизация энергосетей в 'умные' (Smart Grid) для устойчивости к пиковым нагрузкам.",
-            "Внедрение систем рекуперации энергии и геотермальных тепловых насосов."
-        ],
-        water: [
-            "Создание замкнутых циклов сбора, очистки и повторного использования дождевой воды.",
-            "Защита береговых линий с помощью природных решений (биоинженерия и восстановление мангров).",
-            "Развитие энергоэффективного опреснения воды в прибрежных регионах."
-        ],
-        infrastructure: [
-            "Создание 'зеленых крыш' и живых фасадов для естественного охлаждения зданий.",
-            "Использование светоотражающих и пористых покрытий для снижения эффекта теплового острова.",
-            "Развитие бесшовного общественного электротранспорта и расширение пешеходных зон."
-        ],
-        health: [
-            "Внедрение интеллектуальных систем раннего предупреждения о волнах жары.",
-            "Увеличение площади городских парков и водных объектов для улучшения микроклимата.",
-            "Развитие телемедицины для мониторинга здоровья в периоды климатических аномалий."
-        ]
+        agriculture: {
+            ru: ["Внедрение вертикальных ферм.", "Переход на засухоустойчивые культуры.", "Локальные агрокомплексы."],
+            en: ["Implementation of vertical farms.", "Shift to drought-resistant crops.", "Local agro-complexes."],
+            kz: ["Вертикальді фермаларды енгізу.", "Құрғақшылыққа төзімді дақылдар.", "Жергілікті агрокешендер."]
+        },
+        energy: {
+            ru: ["Переход на солнечную и ветровую энергию.", "Модернизация Smart Grid сетей.", "Геотермальные тепловые насосы."],
+            en: ["Transition to solar and wind energy.", "Smart Grid modernization.", "Geothermal heat pumps."],
+            kz: ["Күн және жел энергиясына көшу.", "Smart Grid желілерін жаңғырту.", "Геотермиялық сорғылар."]
+        },
+        water: {
+            ru: ["Замкнутые циклы сбора воды.", "Биоинженерия берегов.", "Энергоэффективное опреснение."],
+            en: ["Closed-loop water collection.", "Shoreline bio-engineering.", "Energy-efficient desalination."],
+            kz: ["Суды жинаудың тұйық циклі.", "Жағалау биоинженериясы.", "Тиімді тұщыландыру."]
+        },
+        infrastructure: {
+            ru: ["Зеленые крыши и живые фасады.", "Светоотражающие покрытия.", "Развитие электротранспорта."],
+            en: ["Green roofs and living facades.", "Reflective coatings.", "Electric transport expansion."],
+            kz: ["Жасыл шатырлар мен тірі фасадтар.", "Шағылыстыратын жабындар.", "Электр көлігін дамыту."]
+        }
     };
 
     function getRandomElement(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    // Получаем фразу с учетом языка
+    function getPhrase(category) {
+        return getRandomElement(adaptationPhrases[category][currentLang] || adaptationPhrases[category]['en']);
+    }
+
     const cityKnowledge = {
-        'москва': { temp: 2.8, water: 0.1, air: 'Хорошее', habit: 'Благоприятно', desc: 'Климат становится мягче, вегетационный период удлиняется. Успешная адаптация: внедрение новых культур и вертикальных ферм. Инфраструктура полностью готова к изменению режима осадков.' },
-        'санкт-петербург': { temp: 3.1, water: 0.7, air: 'Хорошее', habit: 'Стабильно', desc: 'Комплекс защитных сооружений модернизирован. Активное развитие зеленых зон и систем сбора дождевой воды снижает нагрузку на городскую среду.' },
-        'нью-йорк': { temp: 3.5, water: 1.2, air: 'Среднее', habit: 'Адаптируется', desc: 'Реализация проекта защитных парковых зон вдоль побережья. Массовый переход на возобновляемые источники энергии и модернизация общественного транспорта.' },
-        'лондон': { temp: 3.2, water: 0.9, air: 'Хорошее', habit: 'Стабильно', desc: 'Барьер Темзы работает в штатном режиме. Город лидирует по внедрению зеленых крыш, что эффективно снижает эффект городского теплового острова.' },
-        'токио': { temp: 3.8, water: 1.0, air: 'Хорошее', habit: 'Высокотехнологично', desc: 'Передовые системы раннего предупреждения. Активное использование пористых покрытий для предотвращения затоплений и развитие подземных резервуаров.' },
-        'сидней': { temp: 3.6, water: 0.4, air: 'Хорошее', habit: 'Адаптируется', desc: 'Внедрение технологий управления лесными пожарами с помощью ИИ. Переход на засухоустойчивые сорта и масштабные проекты по опреснению воды.' },
-        'дубай': { temp: 4.5, water: 0.5, air: 'Среднее', habit: 'Технологично', desc: 'Массовое использование солнечных панелей нового поколения и систем пассивного охлаждения. Развитие закрытых агрокомплексов с контролируемым климатом.' },
-        'париж': { temp: 3.0, water: 0.3, air: 'Хорошее', habit: 'Благоприятно', desc: 'Проект "Прохлада": масштабное озеленение дворов и создание искусственных водоемов. Сена очищена и пригодна для рекреации.' },
-        'пекин': { temp: 3.9, water: 0.2, air: 'Улучшается', habit: 'Адаптируется', desc: 'Успешная борьба с пыльными бурями благодаря масштабному озеленению. Лидерство в производстве электромобилей и чистой энергетике.' },
-        'сингапур': { temp: 3.4, water: 0.6, air: 'Хорошее', habit: 'Высокотехнологично', desc: 'Мировой лидер "умного" города: вертикальные сады, системы очистки воды NEWater, полная энергетическая независимость за счет солнца.' },
-        'рейкьявик': { temp: 2.1, water: 0.3, air: 'Отличное', habit: 'Благоприятно', desc: 'Полный переход на геотермальную и гидроэнергетику. Увеличение вегетационного периода позволяет развивать локальное тепличное хозяйство.' }
+        'москва': { temp: 2.8, water: 0.1, air: 'val_good', habit: 'val_fav', desc: { ru: 'Климат мягче, вегетационный период длиннее. Успешная адаптация.', en: 'Softer climate, longer growing season. Successful adaptation.', kz: 'Климат жұмсақ, өсу кезеңі ұзарды. Сәтті бейімделу.' } },
+        'st. petersburg': { temp: 3.1, water: 0.7, air: 'val_good', habit: 'val_stable', desc: { ru: 'Защитные сооружения модернизированы. Развитие зеленых зон.', en: 'Protective structures upgraded. Green zones developing.', kz: 'Қорғаныс құрылымдары жаңартылды. Жасыл аймақтар дамуда.' } },
+        'new york': { temp: 3.5, water: 1.2, air: 'val_avg', habit: 'val_adapt', desc: { ru: 'Защитные парковые зоны вдоль побережья. Возобновляемая энергия.', en: 'Protective park zones along the coast. Renewable energy.', kz: 'Жағалаудағы қорғаныс саябақтары. Жаңартылатын энергия.' } },
+        'tokyo': { temp: 3.8, water: 1.0, air: 'val_good', habit: 'val_tech', desc: { ru: 'Системы предупреждения. Пористые покрытия.', en: 'Warning systems. Porous coatings.', kz: 'Ескерту жүйелері. Кеуекті жабындар.' } },
+        'singapore': { temp: 3.4, water: 0.6, air: 'val_good', habit: 'val_tech', desc: { ru: 'Лидер умного города: вертикальные сады, NEWater.', en: 'Smart city leader: vertical gardens, NEWater.', kz: 'Ақылды қала көшбасшысы: тік бақтар, NEWater.' } },
+        'reykjavik': { temp: 2.1, water: 0.3, air: 'val_good', habit: 'val_fav', desc: { ru: 'Геотермальная энергия. Локальное тепличное хозяйство.', en: 'Geothermal energy. Local greenhouse farming.', kz: 'Геотермиялық энергия. Жергілікті жылыжай шаруашылығы.' } }
     };
 
     function pseudoRandom(lat, lon) {
@@ -706,8 +651,14 @@
 
     function getClimateForecast(lat, lon, placeName) {
         const lowerName = placeName ? placeName.toLowerCase() : '';
+        let foundKey = null;
         for (const [key, data] of Object.entries(cityKnowledge)) {
-            if (lowerName.includes(key)) return { ...data, isKnown: true };
+            if (lowerName.includes(key)) { foundKey = key; break; }
+        }
+
+        if (foundKey) {
+            const data = cityKnowledge[foundKey];
+            return { ...data, desc: data.desc[currentLang] || data.desc['en'], isKnown: true };
         }
 
         const absLat = Math.abs(lat);
@@ -715,56 +666,79 @@
         
         let temp = 2.0 + (rand * 2.5);
         let water = 0.1 + (rand * 1.2);
-        let air = 'Хорошее';
-        let habit = 'Стабильно';
+        let air = 'val_good';
+        let habit = 'val_stable';
         let descParts = [];
+        const t = translations[currentLang];
 
         if (absLat > 60) {
             temp = 4.5 + (rand * 2.5); 
-            air = 'Среднее'; 
-            habit = 'Трансформируется';
-            descParts.push("Арктический регион: фокус на новых инженерных решениях для стабилизации грунтов.");
-            descParts.push(getRandomElement(adaptationPhrases.infrastructure));
-            descParts.push(getRandomElement(adaptationPhrases.energy));
+            air = 'val_avg'; 
+            habit = 'val_trans';
+            descParts.push(t.gen_arctic);
+            descParts.push(getPhrase('infrastructure'));
+            descParts.push(getPhrase('energy'));
         } else if (absLat < 25) {
             temp = 3.8 + (rand * 2.0); 
-            air = rand > 0.6 ? 'Среднее' : 'Хорошее'; 
-            habit = 'Адаптируется';
-            descParts.push("Тропический пояс: фокус на защите от экстремальной жары и сохранении водных ресурсов.");
-            descParts.push(getRandomElement(adaptationPhrases.water));
-            descParts.push(getRandomElement(adaptationPhrases.agriculture));
+            air = rand > 0.6 ? 'val_avg' : 'val_good'; 
+            habit = 'val_adapt';
+            descParts.push(t.gen_tropical);
+            descParts.push(getPhrase('water'));
+            descParts.push(getPhrase('agriculture'));
         } else {
-            descParts.push("Умеренный пояс: климат становится более переменчивым, но успешно управляется.");
-            descParts.push(getRandomElement(adaptationPhrases.agriculture));
-            descParts.push(getRandomElement(adaptationPhrases.infrastructure));
-            descParts.push(getRandomElement(adaptationPhrases.health));
+            descParts.push(t.gen_temperate);
+            descParts.push(getPhrase('agriculture'));
+            descParts.push(getPhrase('infrastructure'));
         }
 
         const isCoastal = (lon % 30 < 5 || lon % 30 > 25);
         if (isCoastal && absLat < 65) {
             water = Math.min(water + 0.6, 2.5);
-            descParts.push(`Прибрежная зона: ${getRandomElement(adaptationPhrases.water)} Укрепление береговой линии с помощью восстановления естественных экосистем.`);
+            descParts.push(`${t.gen_coastal_prefix} ${getPhrase('water')} ${t.gen_coastal_suffix}`);
         }
 
         return { 
             temp: Math.round(temp * 10) / 10, 
             water: Math.round(water * 10) / 10, 
-            air, 
-            habit, 
+            air, habit, 
             desc: descParts.join(" "), 
             isKnown: false 
         };
     }
 
     // ============================================
-    // 5. ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ
+    // 6. ОТОБРАЖЕНИЕ
     // ============================================
+    let lastResultData = null; // Для обновления при смене языка
+
+    function updateDynamicText() {
+        if (!lastResultData) return;
+        const t = translations[currentLang];
+        
+        // Обновляем значения, которые зависят от языка (словарные)
+        document.getElementById('airValue').textContent = t[lastResultData.air] || lastResultData.air;
+        document.getElementById('habitableValue').textContent = t[lastResultData.habit] || lastResultData.habit;
+
+        // Бейдж
+        const badge = document.getElementById('statusBadge');
+        if (lastResultData.habit === 'val_trans' || lastResultData.habit === 'val_adapt') {
+            badge.className = 'badge-status badge-attention';
+            badge.textContent = t.badge_warn;
+        } else {
+            badge.className = 'badge-status badge-good';
+            badge.textContent = t.badge_ok;
+        }
+    }
+
     function showResult(placeName, lat, lon) {
         if (isMinimized) togglePanel();
 
         const data = getClimateForecast(lat, lon, placeName);
+        lastResultData = data; // Сохраняем для смены языка
+        
         requestCount++;
-        document.getElementById('clickCounter').textContent = `ЗАПРОСОВ: ${requestCount}`;
+        const t = translations[currentLang];
+        document.getElementById('clickCounter').textContent = `${t.lbl_requests} ${requestCount}`;
 
         const resultBlock = document.getElementById('resultBlock');
         resultBlock.classList.remove('visible');
@@ -776,13 +750,14 @@
         }
 
         setTimeout(() => {
-            smoothFadeText(document.getElementById('cityName'), placeName || 'НЕИЗВЕСТНАЯ ЛОКАЦИЯ', 400);
+            smoothFadeText(document.getElementById('cityName'), placeName || 'UNKNOWN LOCATION', 400);
             document.getElementById('coordsText').textContent = `${lat.toFixed(4)}° N, ${lon.toFixed(4)}° E`;
 
             animateNumber(document.getElementById('tempValue'), data.temp, 1200, '°C');
             document.getElementById('waterValue').textContent = `${data.water > 0 ? '+' : ''}${data.water} м`;
-            smoothFadeText(document.getElementById('airValue'), data.air, 400);
-            smoothFadeText(document.getElementById('habitableValue'), data.habit, 400);
+            
+            smoothFadeText(document.getElementById('airValue'), t[data.air] || data.air, 400);
+            smoothFadeText(document.getElementById('habitableValue'), t[data.habit] || data.habit, 400);
 
             const tempCard = document.getElementById('cardTemp');
             tempCard.className = `stat-card ${data.temp > 4.5 ? 'attention' : ''}`;
@@ -790,20 +765,13 @@
             const waterCard = document.getElementById('cardWater');
             waterCard.className = `stat-card ${data.water > 1.5 ? 'attention' : ''}`;
 
-            const badge = document.getElementById('statusBadge');
-            if (data.habit === 'Трансформируется' || data.habit === 'Требует адаптации') {
-                badge.className = 'badge-status badge-attention';
-                badge.textContent = '⚠️ ТРЕБУЕТСЯ АКТИВНАЯ АДАПТАЦИЯ';
-            } else {
-                badge.className = 'badge-status badge-good';
-                badge.textContent = '✅ УСТОЙЧИВОЕ РАЗВИТИЕ';
-            }
+            updateDynamicText(); // Установка бейджа и текста
 
             smoothFadeText(document.getElementById('descriptionText'), data.desc, 600);
             resultBlock.classList.add('visible');
             
             document.getElementById('searchBtn').disabled = false;
-            document.getElementById('searchBtn').textContent = 'РАССЧИТАТЬ';
+            document.getElementById('searchBtn').textContent = t.btn_calculate;
         }, 300);
     }
 
@@ -824,44 +792,37 @@
     }
 
     // ============================================
-    // 6. МАРКЕР И ОБРАБОТЧИКИ
+    // 7. МАРКЕР И ОБРАБОТЧИКИ
     // ============================================
     function addMarker(lat, lon, label) {
         if (currentMarker) map.removeLayer(currentMarker);
-
         const icon = L.divIcon({
             className: 'click-marker',
             html: '<div class="marker-ripple"></div><div class="marker-core"></div>',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
+            iconSize: [40, 40], iconAnchor: [20, 20]
         });
-
         currentMarker = L.marker([lat, lon], { icon }).addTo(map);
         map.flyTo([lat, lon], Math.max(8, map.getZoom()), { duration: 1.8, easeLinearity: 0.5 });
-
         showResult(label, lat, lon);
     }
 
     map.on('click', function (e) {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
-
         document.getElementById('searchBtn').disabled = true;
-        document.getElementById('searchBtn').textContent = 'ЗАГРУЗКА...';
+        document.getElementById('searchBtn').textContent = 'LOADING...'; // Быстрый фидбек
 
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=ru`)
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=${currentLang === 'kz' ? 'kk' : currentLang}`)
             .then(res => res.json())
             .then(data => {
-                let placeName = 'Точка на карте';
+                let placeName = 'Point on Map';
                 if (data.display_name) {
                     const parts = data.display_name.split(',');
                     placeName = parts.slice(0, 2).join(',').trim();
                 }
                 addMarker(lat, lon, placeName);
             })
-            .catch(() => {
-                addMarker(lat, lon, `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`);
-            });
+            .catch(() => addMarker(lat, lon, `${lat.toFixed(2)}, ${lon.toFixed(2)}`));
     });
 
     let searchTimeout;
@@ -869,13 +830,14 @@
         if (!query.trim()) return;
         if (isMinimized) togglePanel();
 
+        const t = translations[currentLang];
         document.getElementById('searchBtn').disabled = true;
-        document.getElementById('searchBtn').textContent = 'ЗАГРУЗКА...';
+        document.getElementById('searchBtn').textContent = 'LOADING...';
         document.getElementById('resultBlock').classList.remove('visible');
 
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ru`)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=${currentLang === 'kz' ? 'kk' : currentLang}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.length > 0) {
@@ -884,27 +846,21 @@
                         const name = data[0].display_name.split(',')[0];
                         addMarker(lat, lon, name);
                     } else {
-                        alert('Локация не найдена в базе данных.');
+                        alert('Location not found.');
                         document.getElementById('searchBtn').disabled = false;
-                        document.getElementById('searchBtn').textContent = 'РАССЧИТАТЬ';
+                        document.getElementById('searchBtn').textContent = t.btn_calculate;
                     }
                 })
                 .catch(() => {
-                    alert('Ошибка соединения с сервером.');
+                    alert('Connection error.');
                     document.getElementById('searchBtn').disabled = false;
-                    document.getElementById('searchBtn').textContent = 'РАССЧИТАТЬ';
+                    document.getElementById('searchBtn').textContent = t.btn_calculate;
                 });
         }, 500);
     }
 
-    document.getElementById('searchBtn').addEventListener('click', () => {
-        performSearch(document.getElementById('searchInput').value);
-    });
-
-    document.getElementById('searchInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') performSearch(this.value);
-    });
-
+    document.getElementById('searchBtn').addEventListener('click', () => performSearch(document.getElementById('searchInput').value));
+    document.getElementById('searchInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') performSearch(this.value); });
     document.querySelectorAll('.chip').forEach(el => {
         el.addEventListener('click', function () {
             document.getElementById('searchInput').value = this.dataset.place;
@@ -912,6 +868,5 @@
         });
     });
 </script>
-
 </body>
 </html>
